@@ -1,0 +1,168 @@
+# 🏠 Local Development Configuration
+# This configuration is optimized for running the application locally without Docker
+
+# 📋 Application Metadata
+app:
+  base-url: http://localhost:8080
+  oauth2:
+    redirect-uri: http://localhost:8080/login/oauth2/code/google
+    authorized-redirect-uris:
+      - http://localhost:8080/login/oauth2/code/google
+      - http://localhost:3000/oauth2/redirect
+  local-images:
+    directory: ${LOCAL_IMAGES_DIR:./images}
+    url-prefix: /api/images/local/
+    enabled: true
+
+# 🌐 Server Configuration
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# 🔌 Spring DataSource Configuration (Local PostgreSQL)
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/BookStore
+    username: postgres
+    password: Wrong123
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
+  h2:
+    console:
+      enabled: false
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            # client-id: ${GOOGLE_CLIENT_ID:your-google-client-id}
+            # client-secret: ${GOOGLE_CLIENT_SECRET:your-google-client-secret}
+            client-id: your-google-client-id
+            client-secret: your-google-client-secret
+            scope:
+              - email
+              - profile
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        provider:
+          google:
+            issuer-uri: https://accounts.google.com
+
+  # Kafka Configuration (Optional - can be disabled)
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: bookstore-app
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    enabled: false
+    auto-startup: false
+
+  mail:
+    # host: ${MAIL_HOST:smtp.gmail.com}
+    # port: ${MAIL_PORT:587}
+    # username: ${MAIL_USERNAME:your-email@gmail.com}
+    # password: ${MAIL_PASSWORD:your-app-password}
+    # from: ${MAIL_FROM:your-email@gmail.com}
+    host: smtp.gmail.com
+    port: 587
+    username: your-email@gmail.com
+    password: your-app-password
+    from: your-email@gmail.com
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+# 🔐 JWT Authentication Configuration
+jwt:
+  # secret: ${JWT_SECRET:local-jwt-secret-key-make-it-long-and-secure-for-development-only}
+  secret: local-jwt-secret-key-make-it-long-and-secure-for-development-only
+  expiration: 86400000
+
+# 📦 AWS S3 Configuration (Optional)
+cloud:
+  aws:
+    credentials:
+      # access-key: ${AWS_ACCESS_KEY_ID:your-aws-access-key}
+      # secret-key: ${AWS_SECRET_ACCESS_KEY:your-aws-secret-key}
+      access-key: your-aws-access-key
+      secret-key: your-aws-secret-key
+    region:
+      # static: ${AWS_REGION:us-east-1}
+      static: us-east-1
+    s3:
+      # bucket-name: ${AWS_S3_BUCKET:your-s3-bucket}
+      bucket-name: your-s3-bucket
+
+# 📝 Logging Configuration
+logging:
+  level:
+    root: INFO
+    org.springframework.security: INFO
+    com.org.bookstore_backend: DEBUG
+    org.springframework.kafka: WARN
+
+# 🚨 Spring Boot Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# 🌐 CORS Configuration
+cors:
+  allowed-origins: 
+    - "http://localhost:3000"
+    - "http://127.0.0.1:3000"
+    - "http://localhost:8080"
+    - "http://127.0.0.1:8080"
+  allowed-methods: 
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "DELETE"
+    - "PATCH"
+    - "OPTIONS"
+    - "HEAD"
+  allowed-headers: "*"
+  allow-credentials: true
+
+# 💳 Stripe Configuration
+stripe:
+  secret:
+    # key: ${STRIPE_SECRET_KEY:sk_test_your_stripe_secret_key}
+    key: sk_test_your_stripe_secret_key
+  publishable:
+    # key: ${STRIPE_PUBLISHABLE_KEY:pk_test_your_stripe_publishable_key}
+    key: pk_test_your_stripe_publishable_key
+
+# 🛠️ Custom Properties
+info:
+  app:
+    name: BookStore API
+    version: 1.0.0
+    environment: local

@@ -1,0 +1,37 @@
+{
+  "directory": "C:\\Users\\govin\\Downloads\\Java Books",
+  "totalImages": 25,
+  "matchedBooks": 1,
+  "mapping": {
+    "Spring Boot in Action": "springboot3.webp"
+  },
+  "sampleBooks": [
+    {
+      "id": 1,
+      "title": "Spring Boot in Action",
+      "description": "Comprehensive guide to spring boot in action. This book covers all the essential concepts and best practices.",
+      "isbn": "978-0-123456-001-0",
+      "publicationYear": 2020,
+      "imageUrl": "/api/images/local/springboot3.webp",
+      "genre": "Programming",
+      "price": 29.99,
+      "quantity": 10,
+      "isAvailable": true
+    }
+  ],
+  "instructions": {
+    "setup": [
+      "1. Copy your book cover images to: C:\\Users\\govin\\Downloads\\Java Books",
+      "2. Make sure image filenames match book titles (e.g., 'Effective Java.jpg')",
+      "3. Supported formats: .jpg, .jpeg, .png, .gif, .bmp, .webp",
+      "4. Run the Spring Boot application",
+      "5. Use the admin endpoint: POST /api/admin/book-images/assign-local-images"
+    ],
+    "endpoints": [
+      "GET /api/images/local/list - List all available images",
+      "GET /api/images/local/{filename} - Serve an image",
+      "GET /api/admin/book-images/local-images - Get available images (Admin)",
+      "POST /api/admin/book-images/assign-local-images - Auto-assign images to books (Admin)"
+    ]
+  }
+}

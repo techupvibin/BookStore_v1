@@ -1,0 +1,120 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# ===================
+# 📦 Dependencies
+# ===================
+/node_modules/
+/.pnp
+.pnp.js
+
+# ===================
+# 🧪 Testing
+# ===================
+/coverage/
+/test-output/
+
+# ===================
+# 🚀 Production builds
+# ===================
+/build/
+/dist/
+/out/
+
+# ===================
+# 💻 IDE & Editor configs
+# ===================
+.idea/
+.vscode/
+*.iml
+
+# ===================
+# 🐘 OS-specific clutter
+# ===================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===================
+# 🔒 Environment files & Secrets
+# ===================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*
+*.env
+secrets/
+credentials/
+config/secrets/
+
+# ===================
+# 🗑 Logs & debug
+# ===================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# ===================
+# 🖼️ Cache & Artifacts
+# ===================
+.cache/
+*.tmp
+*.bak
+*.pack
+
+# ===================
+# ⚠️ Frontend-specific cleanup
+# ===================
+Frontend/node_modules/
+Frontend/.cache/
+Frontend/**/*.pack
+Frontend/.env
+Frontend/.env.local
+Frontend/.env.development.local
+Frontend/.env.test.local
+Frontend/.env.production.local
+
+# ===================
+# 🔐 Security & Sensitive Files
+# ===================
+*.key
+*.pem
+*.p12
+*.jks
+*.keystore
+*.truststore
+application-secret.yml
+application-secret.properties
+application-secret.yaml
+secrets.yml
+secrets.properties
+secrets.yaml
+
+# ===================
+# 📁 IDE & OS specific
+# ===================
+.vscode/settings.json
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionaries/
+.idea/shelf/
+*.swp
+*.swo
+*~
+
+# ===================
+# 🗂️ Temporary & Build files
+# ===================
+target/
+build/
+out/
+dist/
+*.jar
+*.war
+*.ear
+*.class
+*.log
+*.tmp
+*.temp

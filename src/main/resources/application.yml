@@ -1,0 +1,181 @@
+# 📋 Application Metadata
+app:
+  base-url: http://localhost:8080 # Base URL for your application
+  oauth2:
+    redirect-uri: http://localhost:8080/login/oauth2/code/google
+    authorized-redirect-uris:
+      - http://localhost:8080/login/oauth2/code/google
+      - http://localhost:3000/oauth2/redirect
+
+# 🌐 Server Configuration
+server:
+  port: 8080 # Port on which the application will run
+  error:
+    include-message: always # Always include error messages in responses (useful for debugging)
+    include-binding-errors: always # Include validation binding errors in responses
+  tomcat:
+    max-part-count: 100 # Maximum number of request parts (for multipart/form-data)
+    max-swallow-size: -1 # Unlimited size for request body to be swallowed (use with caution in production)
+    max-http-header-size: 1048576 # 1MB maximum size for HTTP headers
+    max-parameter-count: 10000 # Maximum number of HTTP GET/POST parameters
+
+# 🔌 Spring DataSource Configuration
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres-db:5432/BookStore # Docker database URL
+    username: postgres # Database username
+    password: ${DB_PASSWORD:Wrong123} # Database password
+  jpa:
+    hibernate:
+      ddl-auto: validate # Hibernate DDL generation strategy: 'update' is suitable for development, consider 'validate' or 'none' for production
+    show-sql: true # Log SQL queries to the console
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect # Specifies the Hibernate dialect for PostgreSQL
+  data:
+    redis:
+      host: redis_cache # Redis server host for Docker
+      port: 6379 # Redis server port
+  h2:
+    console:
+      enabled: true # Enable H2 database console (for in-memory database, often used for development/testing)
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            # client-id: ${GOOGLE_CLIENT_ID}
+            # client-secret: ${GOOGLE_CLIENT_SECRET}
+            client-id: your-google-client-id
+            client-secret: your-google-client-secret
+            scope:
+              - email
+              - profile
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        provider:
+          google:
+            issuer-uri: https://accounts.google.com
+
+  kafka:
+    # Local development Kafka configuration
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: bookstore-app
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        # Connection timeout settings
+        session.timeout.ms: 30000
+        heartbeat.interval.ms: 10000
+        max.poll.interval.ms: 300000
+        request.timeout.ms: 40000
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      properties:
+        # Connection timeout settings
+        request.timeout.ms: 40000
+        delivery.timeout.ms: 120000
+    listener:
+      ack-mode: batch
+      missing-topics-fatal: false
+      # Auto-start listeners after a delay
+      auto-startup: true
+      # Start listeners with a delay to allow Kafka to be ready
+      startup-timeout: 60000
+    enabled: false
+    auto-startup: false
+
+  mail:
+    # host: ${MAIL_HOST:live.smtp.mailtrap.io}
+    # port: ${MAIL_PORT:587}
+    # username: ${MAIL_USERNAME:Govind}
+    # password: ${MAIL_PASSWORD:Govind123}
+    # from: ${MAIL_FROM:hello@demomailtrap.co}
+    host: live.smtp.mailtrap.io
+    port: 587
+    username: Govind
+    password: Govind123
+    from: hello@demomailtrap.co
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          ssl:
+            trust: live.smtp.mailtrap.io
+
+# 🔐 JWT Authentication Configuration
+jwt:
+  # ⭐ CRITICAL: JWT secret key. This value must be securely stored and NOT hardcoded in production.
+  # Use a strong, randomly generated, Base64-encoded string (e.g., from a key generator tool).
+  # For production, always use an environment variable like ${JWT_SECRET}.
+  # secret: ${JWT_SECRET:dGhpcy1pcy1hLXN1cGVyLXNlY3JldC1rZXktdGhhdC1pcy1tb3JlLXRoYW4tMzItYnl0ZXMhISE=}
+  secret: dGhpcy1pcy1hLXN1cGVyLXNlY3JldC1rZXktdGhhdC1pcy1tb3JlLXRoYW4tMzItYnl0ZXMhISE=
+  expiration: 86400000 # Token expiration time in milliseconds (10 hours = 10 * 60 * 60 * 1000 = 36000000, 86400000 is 24 hours)
+
+# 📦 AWS S3 Configuration
+cloud:
+  aws:
+    credentials:
+      # access-key: ${AWS_ACCESS_KEY_ID:} # AWS access key
+      # secret-key: ${AWS_SECRET_ACCESS_KEY:} # AWS secret key (🔐 Sensitive: consider environment variables for production)
+      access-key: your-aws-access-key
+      secret-key: your-aws-secret-key
+    region:
+      # static: ${AWS_REGION:eu-north-1} # AWS region
+      static: eu-north-1
+    s3:
+      # bucket-name: ${AWS_S3_BUCKET:} # S3 bucket name
+      bucket-name: your-s3-bucket
+
+# 📝 Logging Configuration
+logging:
+  level:
+    root: INFO # Default logging level
+    org.springframework.security: DEBUG # Enable DEBUG logs for Spring Security (very verbose, good for debugging security issues)
+    com.org.bookstore_backend: DEBUG # Enable DEBUG logs for your application's packages
+
+# 🚨 Spring Boot Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*" # Expose all web endpoints (health, info, etc.)
+  endpoint:
+    health:
+      show-details: always # Always show full health details
+
+# 🌐 CORS Configuration
+cors:
+  allowed-origins: ["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8080", "http://127.0.0.1:8080"] # More specific origins
+  allowed-methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"] # Allowed HTTP methods
+  allowed-headers: ["*"] # Allowed HTTP headers (e.g., Authorization, Content-Type)
+  allow-credentials: true # Allow sending credentials (like cookies or authorization headers)
+
+# 💳 Stripe Configuration
+stripe:
+  secret:
+    # key: ${STRIPE_SECRET_KEY:your-stripe-secret-key}
+    key: your-stripe-secret-key
+    # Stripe secret key (ensure this is a test key for development)
+  publishable:
+    # key: ${STRIPE_PUBLISHABLE_KEY:your-stripe-publishable-key}
+    key: your-stripe-publishable-key
+    # Stripe publishable key (this is the key you can use on the frontend)
+# 🖼️ Local Images Configuration
+  local-images:
+    directory: ${LOCAL_IMAGES_DIR:/app/images} # Local directory containing book images
+    url-prefix: /api/images/local/ # URL prefix for serving local images
+    enabled: true # Enable local image serving
+
+# 🛠️ Custom Properties
+info:
+  app:
+    name: BookStore API # Application name
+    version: 1.0.0 # Application version
+    environment: development # Application environment

@@ -1,0 +1,308 @@
+/* ====================
+   BookStore Color Palette System
+   ==================== */
+
+:root {
+  /* ====================
+     Primary Colors (Brand Colors)
+     ==================== */
+  --primary-50: #eff6ff;
+  --primary-100: #dbeafe;
+  --primary-200: #bfdbfe;
+  --primary-300: #93c5fd;
+  --primary-400: #60a5fa;
+  --primary-500: #3b82f6;  /* Main brand color */
+  --primary-600: #2563eb;
+  --primary-700: #1d4ed8;
+  --primary-800: #1e40af;
+  --primary-900: #1e3a8a;
+  --primary-950: #172554;
+
+  /* ====================
+     Secondary Colors (Accent Colors)
+     ==================== */
+  --secondary-50: #fdf2f8;
+  --secondary-100: #fce7f3;
+  --secondary-200: #fbcfe8;
+  --secondary-300: #f9a8d4;
+  --secondary-400: #f472b6;
+  --secondary-500: #ec4899;  /* Main accent color */
+  --secondary-600: #db2777;
+  --secondary-700: #be185d;
+  --secondary-800: #9d174d;
+  --secondary-900: #831843;
+  --secondary-950: #500724;
+
+  /* ====================
+     Neutral Colors (Grays)
+     ==================== */
+  --neutral-50: #f8fafc;
+  --neutral-100: #f1f5f9;
+  --neutral-200: #e2e8f0;
+  --neutral-300: #cbd5e1;
+  --neutral-400: #94a3b8;
+  --neutral-500: #64748b;
+  --neutral-600: #475569;
+  --neutral-700: #334155;
+  --neutral-800: #1e293b;
+  --neutral-900: #0f172a;
+  --neutral-950: #020617;
+
+  /* ====================
+     Success Colors (Green)
+     ==================== */
+  --success-50: #f0fdf4;
+  --success-100: #dcfce7;
+  --success-200: #bbf7d0;
+  --success-300: #86efac;
+  --success-400: #4ade80;
+  --success-500: #22c55e;  /* Success state */
+  --success-600: #16a34a;
+  --success-700: #15803d;
+  --success-800: #166534;
+  --success-900: #14532d;
+  --success-950: #052e16;
+
+  /* ====================
+     Warning Colors (Amber/Orange)
+     ==================== */
+  --warning-50: #fffbeb;
+  --warning-100: #fef3c7;
+  --warning-200: #fde68a;
+  --warning-300: #fcd34d;
+  --warning-400: #fbbf24;
+  --warning-500: #f59e0b;  /* Warning state */
+  --warning-600: #d97706;
+  --warning-700: #b45309;
+  --warning-800: #92400e;
+  --warning-900: #78350f;
+  --warning-950: #451a03;
+
+  /* ====================
+     Error Colors (Red)
+     ==================== */
+  --error-50: #fef2f2;
+  --error-100: #fee2e2;
+  --error-200: #fecaca;
+  --error-300: #fca5a5;
+  --error-400: #f87171;
+  --error-500: #ef4444;  /* Error state */
+  --error-600: #dc2626;
+  --error-700: #b91c1c;
+  --error-800: #991b1b;
+  --error-900: #7f1d1d;
+  --error-950: #450a0a;
+
+  /* ====================
+     Info Colors (Sky Blue)
+     ==================== */
+  --info-50: #f0f9ff;
+  --info-100: #e0f2fe;
+  --info-200: #bae6fd;
+  --info-300: #7dd3fc;
+  --info-400: #38bdf8;
+  --info-500: #0ea5e9;  /* Info state */
+  --info-600: #0284c7;
+  --info-700: #0369a1;
+  --info-800: #075985;
+  --info-900: #0c4a6e;
+  --info-950: #082f49;
+
+  /* ====================
+     Semantic Color Aliases
+     ==================== */
+  --color-primary: var(--primary-500);
+  --color-primary-light: var(--primary-400);
+  --color-primary-dark: var(--primary-600);
+  
+  --color-secondary: var(--secondary-500);
+  --color-secondary-light: var(--secondary-400);
+  --color-secondary-dark: var(--secondary-600);
+  
+  --color-success: var(--success-500);
+  --color-warning: var(--warning-500);
+  --color-error: var(--error-500);
+  --color-info: var(--info-500);
+
+  /* ====================
+     Background Colors
+     ==================== */
+  --bg-primary: var(--neutral-50);
+  --bg-secondary: var(--neutral-100);
+  --bg-tertiary: var(--neutral-200);
+  --bg-elevated: #ffffff;
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+
+  /* ====================
+     Text Colors
+     ==================== */
+  --text-primary: var(--neutral-900);
+  --text-secondary: var(--neutral-600);
+  --text-tertiary: var(--neutral-500);
+  --text-disabled: var(--neutral-400);
+  --text-inverse: #ffffff;
+
+  /* ====================
+     Border Colors
+     ==================== */
+  --border-light: var(--neutral-200);
+  --border-medium: var(--neutral-300);
+  --border-dark: var(--neutral-400);
+  --border-focus: var(--primary-500);
+
+  /* ====================
+     Shadow Colors
+     ==================== */
+  --shadow-light: rgba(0, 0, 0, 0.05);
+  --shadow-medium: rgba(0, 0, 0, 0.1);
+  --shadow-dark: rgba(0, 0, 0, 0.2);
+  --shadow-colored: rgba(59, 130, 246, 0.15);
+
+  /* ====================
+     Gradient Definitions
+     ==================== */
+  --gradient-primary: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+  --gradient-secondary: linear-gradient(135deg, var(--secondary-500) 0%, var(--secondary-600) 100%);
+  --gradient-hero: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 100%);
+  --gradient-card: linear-gradient(135deg, #ffffff 0%, var(--neutral-50) 100%);
+  --gradient-overlay: linear-gradient(135deg, rgba(59, 130, 246, 0.9) 0%, rgba(236, 72, 153, 0.9) 100%);
+}
+
+/* ====================
+   Dark Theme Overrides
+   ==================== */
+[data-theme="dark"] {
+  /* Background Colors */
+  --bg-primary: var(--neutral-900);
+  --bg-secondary: var(--neutral-800);
+  --bg-tertiary: var(--neutral-700);
+  --bg-elevated: var(--neutral-800);
+  --bg-overlay: rgba(0, 0, 0, 0.7);
+
+  /* Text Colors */
+  --text-primary: var(--neutral-50);
+  --text-secondary: var(--neutral-300);
+  --text-tertiary: var(--neutral-400);
+  --text-disabled: var(--neutral-600);
+  --text-inverse: var(--neutral-900);
+
+  /* Border Colors */
+  --border-light: var(--neutral-700);
+  --border-medium: var(--neutral-600);
+  --border-dark: var(--neutral-500);
+
+  /* Shadow Colors */
+  --shadow-light: rgba(0, 0, 0, 0.2);
+  --shadow-medium: rgba(0, 0, 0, 0.3);
+  --shadow-dark: rgba(0, 0, 0, 0.5);
+  --shadow-colored: rgba(59, 130, 246, 0.3);
+
+  /* Gradient Overrides */
+  --gradient-card: linear-gradient(135deg, var(--neutral-800) 0%, var(--neutral-700) 100%);
+}
+
+/* ====================
+   High Contrast Mode
+   ==================== */
+@media (prefers-contrast: high) {
+  :root {
+    --color-primary: var(--primary-700);
+    --color-secondary: var(--secondary-700);
+    --border-focus: var(--primary-700);
+    --text-primary: #000000;
+    --text-secondary: #333333;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f0f0f0;
+  }
+
+  [data-theme="dark"] {
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --bg-primary: #000000;
+    --bg-secondary: #1a1a1a;
+  }
+}
+
+/* ====================
+   Reduced Motion
+   ==================== */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-fast: 0s;
+    --transition-normal: 0s;
+    --transition-slow: 0s;
+  }
+}
+
+/* ====================
+   Utility Classes for Colors
+   ==================== */
+
+/* Background Colors */
+.bg-primary { background-color: var(--bg-primary); }
+.bg-secondary { background-color: var(--bg-secondary); }
+.bg-tertiary { background-color: var(--bg-tertiary); }
+.bg-elevated { background-color: var(--bg-elevated); }
+
+.bg-brand { background-color: var(--color-primary); }
+.bg-accent { background-color: var(--color-secondary); }
+.bg-success { background-color: var(--color-success); }
+.bg-warning { background-color: var(--color-warning); }
+.bg-error { background-color: var(--color-error); }
+.bg-info { background-color: var(--color-info); }
+
+/* Text Colors */
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-tertiary { color: var(--text-tertiary); }
+.text-disabled { color: var(--text-disabled); }
+.text-inverse { color: var(--text-inverse); }
+
+.text-brand { color: var(--color-primary); }
+.text-accent { color: var(--color-secondary); }
+.text-success { color: var(--color-success); }
+.text-warning { color: var(--color-warning); }
+.text-error { color: var(--color-error); }
+.text-info { color: var(--color-info); }
+
+/* Border Colors */
+.border-light { border-color: var(--border-light); }
+.border-medium { border-color: var(--border-medium); }
+.border-dark { border-color: var(--border-dark); }
+.border-focus { border-color: var(--border-focus); }
+
+.border-brand { border-color: var(--color-primary); }
+.border-accent { border-color: var(--color-secondary); }
+.border-success { border-color: var(--color-success); }
+.border-warning { border-color: var(--color-warning); }
+.border-error { border-color: var(--color-error); }
+.border-info { border-color: var(--color-info); }
+
+/* Gradient Backgrounds */
+.gradient-primary { background: var(--gradient-primary); }
+.gradient-secondary { background: var(--gradient-secondary); }
+.gradient-hero { background: var(--gradient-hero); }
+.gradient-card { background: var(--gradient-card); }
+.gradient-overlay { background: var(--gradient-overlay); }
+
+/* Hover States */
+.hover-brand:hover { 
+  background-color: var(--color-primary);
+  color: var(--text-inverse);
+}
+
+.hover-accent:hover { 
+  background-color: var(--color-secondary);
+  color: var(--text-inverse);
+}
+
+/* Focus States */
+.focus-brand:focus { 
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--shadow-colored);
+}
+
+.focus-accent:focus { 
+  border-color: var(--color-secondary);
+  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.15);
+}

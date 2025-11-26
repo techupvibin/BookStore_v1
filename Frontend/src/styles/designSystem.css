@@ -1,0 +1,660 @@
+/* ====================
+   BookStore Design System
+   ==================== */
+
+/* ====================
+   Spacing Scale
+   ==================== */
+:root {
+  /* Base spacing unit */
+  --spacing-unit: 0.25rem; /* 4px */
+  
+  /* Spacing scale */
+  --spacing-0: 0;
+  --spacing-1: var(--spacing-unit);      /* 4px */
+  --spacing-2: calc(var(--spacing-unit) * 2);   /* 8px */
+  --spacing-3: calc(var(--spacing-unit) * 3);   /* 12px */
+  --spacing-4: calc(var(--spacing-unit) * 4);   /* 16px */
+  --spacing-5: calc(var(--spacing-unit) * 5);   /* 20px */
+  --spacing-6: calc(var(--spacing-unit) * 6);   /* 24px */
+  --spacing-8: calc(var(--spacing-unit) * 8);   /* 32px */
+  --spacing-10: calc(var(--spacing-unit) * 10); /* 40px */
+  --spacing-12: calc(var(--spacing-unit) * 12); /* 48px */
+  --spacing-16: calc(var(--spacing-unit) * 16); /* 64px */
+  --spacing-20: calc(var(--spacing-unit) * 20); /* 80px */
+  --spacing-24: calc(var(--spacing-unit) * 24); /* 96px */
+  --spacing-32: calc(var(--spacing-unit) * 32); /* 128px */
+  --spacing-40: calc(var(--spacing-unit) * 40); /* 160px */
+  --spacing-48: calc(var(--spacing-unit) * 48); /* 192px */
+  --spacing-56: calc(var(--spacing-unit) * 56); /* 224px */
+  --spacing-64: calc(var(--spacing-unit) * 64); /* 256px */
+
+  /* ====================
+     Typography Scale
+     ==================== */
+  --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  --font-family-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  
+  /* Font sizes */
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.875rem;   /* 14px */
+  --text-base: 1rem;     /* 16px */
+  --text-lg: 1.125rem;   /* 18px */
+  --text-xl: 1.25rem;    /* 20px */
+  --text-2xl: 1.5rem;    /* 24px */
+  --text-3xl: 1.875rem;  /* 30px */
+  --text-4xl: 2.25rem;   /* 36px */
+  --text-5xl: 3rem;      /* 48px */
+  --text-6xl: 3.75rem;   /* 60px */
+  --text-7xl: 4.5rem;    /* 72px */
+  --text-8xl: 6rem;      /* 96px */
+  --text-9xl: 8rem;      /* 128px */
+
+  /* Font weights */
+  --font-thin: 100;
+  --font-extralight: 200;
+  --font-light: 300;
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  --font-extrabold: 800;
+  --font-black: 900;
+
+  /* Line heights */
+  --leading-none: 1;
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+  --leading-loose: 2;
+
+  /* Letter spacing */
+  --tracking-tighter: -0.05em;
+  --tracking-tight: -0.025em;
+  --tracking-normal: 0em;
+  --tracking-wide: 0.025em;
+  --tracking-wider: 0.05em;
+  --tracking-widest: 0.1em;
+
+  /* ====================
+     Border Radius
+     ==================== */
+  --radius-none: 0;
+  --radius-sm: 0.125rem;   /* 2px */
+  --radius-base: 0.25rem;  /* 4px */
+  --radius-md: 0.375rem;   /* 6px */
+  --radius-lg: 0.5rem;     /* 8px */
+  --radius-xl: 0.75rem;    /* 12px */
+  --radius-2xl: 1rem;      /* 16px */
+  --radius-3xl: 1.5rem;    /* 24px */
+  --radius-full: 9999px;
+
+  /* ====================
+     Shadows
+     ==================== */
+  --shadow-xs: 0 1px 2px 0 var(--shadow-light);
+  --shadow-sm: 0 1px 3px 0 var(--shadow-light), 0 1px 2px 0 var(--shadow-light);
+  --shadow-base: 0 1px 3px 0 var(--shadow-medium), 0 1px 2px 0 var(--shadow-light);
+  --shadow-md: 0 4px 6px -1px var(--shadow-medium), 0 2px 4px -1px var(--shadow-light);
+  --shadow-lg: 0 10px 15px -3px var(--shadow-medium), 0 4px 6px -2px var(--shadow-light);
+  --shadow-xl: 0 20px 25px -5px var(--shadow-medium), 0 10px 10px -5px var(--shadow-light);
+  --shadow-2xl: 0 25px 50px -12px var(--shadow-dark);
+  --shadow-inner: inset 0 2px 4px 0 var(--shadow-light);
+
+  /* ====================
+     Transitions
+     ==================== */
+  --transition-fast: 150ms ease-in-out;
+  --transition-normal: 250ms ease-in-out;
+  --transition-slow: 350ms ease-in-out;
+  --transition-slower: 500ms ease-in-out;
+
+  /* ====================
+     Z-Index Scale
+     ==================== */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+  --z-toast: 1080;
+
+  /* ====================
+     Breakpoints
+     ==================== */
+  --breakpoint-xs: 0;
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+
+  /* ====================
+     Container Max Widths
+     ==================== */
+  --container-sm: 640px;
+  --container-md: 768px;
+  --container-lg: 1024px;
+  --container-xl: 1280px;
+  --container-2xl: 1536px;
+}
+
+/* ====================
+   Typography Utility Classes
+   ==================== */
+
+/* Font sizes */
+.text-xs { font-size: var(--text-xs); }
+.text-sm { font-size: var(--text-sm); }
+.text-base { font-size: var(--text-base); }
+.text-lg { font-size: var(--text-lg); }
+.text-xl { font-size: var(--text-xl); }
+.text-2xl { font-size: var(--text-2xl); }
+.text-3xl { font-size: var(--text-3xl); }
+.text-4xl { font-size: var(--text-4xl); }
+.text-5xl { font-size: var(--text-5xl); }
+.text-6xl { font-size: var(--text-6xl); }
+.text-7xl { font-size: var(--text-7xl); }
+.text-8xl { font-size: var(--text-8xl); }
+.text-9xl { font-size: var(--text-9xl); }
+
+/* Font weights */
+.font-thin { font-weight: var(--font-thin); }
+.font-extralight { font-weight: var(--font-extralight); }
+.font-light { font-weight: var(--font-light); }
+.font-normal { font-weight: var(--font-normal); }
+.font-medium { font-weight: var(--font-medium); }
+.font-semibold { font-weight: var(--font-semibold); }
+.font-bold { font-weight: var(--font-bold); }
+.font-extrabold { font-weight: var(--font-extrabold); }
+.font-black { font-weight: var(--font-black); }
+
+/* Line heights */
+.leading-none { line-height: var(--leading-none); }
+.leading-tight { line-height: var(--leading-tight); }
+.leading-snug { line-height: var(--leading-snug); }
+.leading-normal { line-height: var(--leading-normal); }
+.leading-relaxed { line-height: var(--leading-relaxed); }
+.leading-loose { line-height: var(--leading-loose); }
+
+/* Letter spacing */
+.tracking-tighter { letter-spacing: var(--tracking-tighter); }
+.tracking-tight { letter-spacing: var(--tracking-tight); }
+.tracking-normal { letter-spacing: var(--tracking-normal); }
+.tracking-wide { letter-spacing: var(--tracking-wide); }
+.tracking-wider { letter-spacing: var(--tracking-wider); }
+.tracking-widest { letter-spacing: var(--tracking-widest); }
+
+/* ====================
+   Caption and Typography Styles
+   ==================== */
+
+/* Caption Styles - Theme Aware */
+.caption {
+  font-size: var(--text-xs);
+  line-height: var(--leading-tight);
+  color: var(--text-secondary);
+  font-weight: var(--font-normal);
+  letter-spacing: var(--tracking-wide);
+}
+
+.caption-primary {
+  font-size: var(--text-xs);
+  line-height: var(--leading-tight);
+  color: var(--text-primary);
+  font-weight: var(--font-medium);
+  letter-spacing: var(--tracking-wide);
+}
+
+.caption-secondary {
+  font-size: var(--text-xs);
+  line-height: var(--leading-tight);
+  color: var(--text-secondary);
+  font-weight: var(--font-normal);
+  letter-spacing: var(--tracking-wide);
+}
+
+.caption-tertiary {
+  font-size: var(--text-xs);
+  line-height: var(--leading-tight);
+  color: var(--text-tertiary);
+  font-weight: var(--font-normal);
+  letter-spacing: var(--tracking-wide);
+}
+
+.caption-disabled {
+  font-size: var(--text-xs);
+  line-height: var(--leading-tight);
+  color: var(--text-disabled);
+  font-weight: var(--font-normal);
+  letter-spacing: var(--tracking-wide);
+}
+
+/* Small Text Styles */
+.text-small {
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--text-secondary);
+}
+
+.text-small-primary {
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--text-primary);
+  font-weight: var(--font-medium);
+}
+
+/* Meta Text Styles */
+.text-meta {
+  font-size: var(--text-xs);
+  line-height: var(--leading-tight);
+  color: var(--text-tertiary);
+  font-weight: var(--font-normal);
+  letter-spacing: var(--tracking-wide);
+}
+
+/* Timestamp Styles */
+.text-timestamp {
+  font-size: var(--text-xs);
+  line-height: var(--leading-tight);
+  color: var(--text-tertiary);
+  font-weight: var(--font-normal);
+  letter-spacing: var(--tracking-wide);
+  opacity: 0.7;
+}
+
+/* ====================
+   Dark Theme Caption Overrides
+   ==================== */
+
+[data-theme="dark"] .caption {
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .caption-primary {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .caption-secondary {
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .caption-tertiary {
+  color: var(--text-tertiary);
+}
+
+[data-theme="dark"] .caption-disabled {
+  color: var(--text-disabled);
+}
+
+[data-theme="dark"] .text-small {
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .text-small-primary {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .text-meta {
+  color: var(--text-tertiary);
+}
+
+[data-theme="dark"] .text-timestamp {
+  color: var(--text-tertiary);
+}
+
+/* ====================
+   Material-UI Caption Override Classes
+   ==================== */
+
+/* Override Material-UI caption styles to use our theme system */
+.mui-caption {
+  font-size: var(--text-xs) !important;
+  line-height: var(--leading-tight) !important;
+  color: var(--text-secondary) !important;
+  font-weight: var(--font-normal) !important;
+  letter-spacing: var(--tracking-wide) !important;
+}
+
+.mui-caption-primary {
+  font-size: var(--text-xs) !important;
+  line-height: var(--leading-tight) !important;
+  color: var(--text-primary) !important;
+  font-weight: var(--font-medium) !important;
+  letter-spacing: var(--tracking-wide) !important;
+}
+
+/* ====================
+   Spacing Utility Classes
+   ==================== */
+
+/* Margin */
+.m-0 { margin: var(--spacing-0); }
+.m-1 { margin: var(--spacing-1); }
+.m-2 { margin: var(--spacing-2); }
+.m-3 { margin: var(--spacing-3); }
+.m-4 { margin: var(--spacing-4); }
+.m-5 { margin: var(--spacing-5); }
+.m-6 { margin: var(--spacing-6); }
+.m-8 { margin: var(--spacing-8); }
+.m-10 { margin: var(--spacing-10); }
+.m-12 { margin: var(--spacing-12); }
+.m-16 { margin: var(--spacing-16); }
+.m-20 { margin: var(--spacing-20); }
+.m-24 { margin: var(--spacing-24); }
+.m-32 { margin: var(--spacing-32); }
+.m-40 { margin: var(--spacing-40); }
+.m-48 { margin: var(--spacing-48); }
+.m-56 { margin: var(--spacing-56); }
+.m-64 { margin: var(--spacing-64); }
+
+/* Margin X (horizontal) */
+.mx-0 { margin-left: var(--spacing-0); margin-right: var(--spacing-0); }
+.mx-1 { margin-left: var(--spacing-1); margin-right: var(--spacing-1); }
+.mx-2 { margin-left: var(--spacing-2); margin-right: var(--spacing-2); }
+.mx-3 { margin-left: var(--spacing-3); margin-right: var(--spacing-3); }
+.mx-4 { margin-left: var(--spacing-4); margin-right: var(--spacing-4); }
+.mx-5 { margin-left: var(--spacing-5); margin-right: var(--spacing-5); }
+.mx-6 { margin-left: var(--spacing-6); margin-right: var(--spacing-6); }
+.mx-8 { margin-left: var(--spacing-8); margin-right: var(--spacing-8); }
+.mx-10 { margin-left: var(--spacing-10); margin-right: var(--spacing-10); }
+.mx-12 { margin-left: var(--spacing-12); margin-right: var(--spacing-12); }
+.mx-16 { margin-left: var(--spacing-16); margin-right: var(--spacing-16); }
+.mx-20 { margin-left: var(--spacing-20); margin-right: var(--spacing-20); }
+.mx-24 { margin-left: var(--spacing-24); margin-right: var(--spacing-24); }
+.mx-32 { margin-left: var(--spacing-32); margin-right: var(--spacing-32); }
+.mx-40 { margin-left: var(--spacing-40); margin-right: var(--spacing-40); }
+.mx-48 { margin-left: var(--spacing-48); margin-right: var(--spacing-48); }
+.mx-56 { margin-left: var(--spacing-56); margin-right: var(--spacing-56); }
+.mx-64 { margin-left: var(--spacing-64); margin-right: var(--spacing-64); }
+
+/* Margin Y (vertical) */
+.my-0 { margin-top: var(--spacing-0); margin-bottom: var(--spacing-0); }
+.my-1 { margin-top: var(--spacing-1); margin-bottom: var(--spacing-1); }
+.my-2 { margin-top: var(--spacing-2); margin-bottom: var(--spacing-2); }
+.my-3 { margin-top: var(--spacing-3); margin-bottom: var(--spacing-3); }
+.my-4 { margin-top: var(--spacing-4); margin-bottom: var(--spacing-4); }
+.my-5 { margin-top: var(--spacing-5); margin-bottom: var(--spacing-5); }
+.my-6 { margin-top: var(--spacing-6); margin-bottom: var(--spacing-6); }
+.my-8 { margin-top: var(--spacing-8); margin-bottom: var(--spacing-8); }
+.my-10 { margin-top: var(--spacing-10); margin-bottom: var(--spacing-10); }
+.my-12 { margin-top: var(--spacing-12); margin-bottom: var(--spacing-12); }
+.my-16 { margin-top: var(--spacing-16); margin-bottom: var(--spacing-16); }
+.my-20 { margin-top: var(--spacing-20); margin-bottom: var(--spacing-20); }
+.my-24 { margin-top: var(--spacing-24); margin-bottom: var(--spacing-24); }
+.my-32 { margin-top: var(--spacing-32); margin-bottom: var(--spacing-32); }
+.my-40 { margin-top: var(--spacing-40); margin-bottom: var(--spacing-40); }
+.my-48 { margin-top: var(--spacing-48); margin-bottom: var(--spacing-48); }
+.my-56 { margin-top: var(--spacing-56); margin-bottom: var(--spacing-56); }
+.my-64 { margin-top: var(--spacing-64); margin-bottom: var(--spacing-64); }
+
+/* Padding */
+.p-0 { padding: var(--spacing-0); }
+.p-1 { padding: var(--spacing-1); }
+.p-2 { padding: var(--spacing-2); }
+.p-3 { padding: var(--spacing-3); }
+.p-4 { padding: var(--spacing-4); }
+.p-5 { padding: var(--spacing-5); }
+.p-6 { padding: var(--spacing-6); }
+.p-8 { padding: var(--spacing-8); }
+.p-10 { padding: var(--spacing-10); }
+.p-12 { padding: var(--spacing-12); }
+.p-16 { padding: var(--spacing-16); }
+.p-20 { padding: var(--spacing-20); }
+.p-24 { padding: var(--spacing-24); }
+.p-32 { padding: var(--spacing-32); }
+.p-40 { padding: var(--spacing-40); }
+.p-48 { padding: var(--spacing-48); }
+.p-56 { padding: var(--spacing-56); }
+.p-64 { padding: var(--spacing-64); }
+
+/* Padding X (horizontal) */
+.px-0 { padding-left: var(--spacing-0); padding-right: var(--spacing-0); }
+.px-1 { padding-left: var(--spacing-1); padding-right: var(--spacing-1); }
+.px-2 { padding-left: var(--spacing-2); padding-right: var(--spacing-2); }
+.px-3 { padding-left: var(--spacing-3); padding-right: var(--spacing-3); }
+.px-4 { padding-left: var(--spacing-4); padding-right: var(--spacing-4); }
+.px-5 { padding-left: var(--spacing-5); padding-right: var(--spacing-5); }
+.px-6 { padding-left: var(--spacing-6); padding-right: var(--spacing-6); }
+.px-8 { padding-left: var(--spacing-8); padding-right: var(--spacing-8); }
+.px-10 { padding-left: var(--spacing-10); padding-right: var(--spacing-10); }
+.px-12 { padding-left: var(--spacing-12); padding-right: var(--spacing-12); }
+.px-16 { padding-left: var(--spacing-16); padding-right: var(--spacing-16); }
+.px-20 { padding-left: var(--spacing-20); padding-right: var(--spacing-20); }
+.px-24 { padding-left: var(--spacing-24); padding-right: var(--spacing-24); }
+.px-32 { padding-left: var(--spacing-32); padding-right: var(--spacing-32); }
+.px-40 { padding-left: var(--spacing-40); padding-right: var(--spacing-40); }
+.px-48 { padding-left: var(--spacing-48); padding-right: var(--spacing-48); }
+.px-56 { padding-left: var(--spacing-56); padding-right: var(--spacing-56); }
+.px-64 { padding-left: var(--spacing-64); padding-right: var(--spacing-64); }
+
+/* Padding Y (vertical) */
+.py-0 { padding-top: var(--spacing-0); padding-bottom: var(--spacing-0); }
+.py-1 { padding-top: var(--spacing-1); padding-bottom: var(--spacing-1); }
+.py-2 { padding-top: var(--spacing-2); padding-bottom: var(--spacing-2); }
+.py-3 { padding-top: var(--spacing-3); padding-bottom: var(--spacing-3); }
+.py-4 { padding-top: var(--spacing-4); padding-bottom: var(--spacing-4); }
+.py-5 { padding-top: var(--spacing-5); padding-bottom: var(--spacing-5); }
+.py-6 { padding-top: var(--spacing-6); padding-bottom: var(--spacing-6); }
+.py-8 { padding-top: var(--spacing-8); padding-bottom: var(--spacing-8); }
+.py-10 { padding-top: var(--spacing-10); padding-bottom: var(--spacing-10); }
+.py-12 { padding-top: var(--spacing-12); padding-bottom: var(--spacing-12); }
+.py-16 { padding-top: var(--spacing-16); padding-bottom: var(--spacing-16); }
+.py-20 { padding-top: var(--spacing-20); padding-bottom: var(--spacing-20); }
+.py-24 { padding-top: var(--spacing-24); padding-bottom: var(--spacing-24); }
+.py-32 { padding-top: var(--spacing-32); padding-bottom: var(--spacing-32); }
+.py-40 { padding-top: var(--spacing-40); padding-bottom: var(--spacing-40); }
+.py-48 { padding-top: var(--spacing-48); padding-bottom: var(--spacing-48); }
+.py-56 { padding-top: var(--spacing-56); padding-bottom: var(--spacing-56); }
+.py-64 { padding-top: var(--spacing-64); padding-bottom: var(--spacing-64); }
+
+/* ====================
+   Border Radius Utility Classes
+   ==================== */
+.rounded-none { border-radius: var(--radius-none); }
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded { border-radius: var(--radius-base); }
+.rounded-md { border-radius: var(--radius-md); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-xl { border-radius: var(--radius-xl); }
+.rounded-2xl { border-radius: var(--radius-2xl); }
+.rounded-3xl { border-radius: var(--radius-3xl); }
+.rounded-full { border-radius: var(--radius-full); }
+
+/* ====================
+   Shadow Utility Classes
+   ==================== */
+.shadow-xs { box-shadow: var(--shadow-xs); }
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow { box-shadow: var(--shadow-base); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+.shadow-xl { box-shadow: var(--shadow-xl); }
+.shadow-2xl { box-shadow: var(--shadow-2xl); }
+.shadow-inner { box-shadow: var(--shadow-inner); }
+
+/* ====================
+   Transition Utility Classes
+   ==================== */
+.transition-fast { transition: all var(--transition-fast); }
+.transition-normal { transition: all var(--transition-normal); }
+.transition-slow { transition: all var(--transition-slow); }
+.transition-slower { transition: all var(--transition-slower); }
+
+/* ====================
+   Layout Utility Classes
+   ==================== */
+
+/* Display */
+.block { display: block; }
+.inline-block { display: inline-block; }
+.inline { display: inline; }
+.flex { display: flex; }
+.inline-flex { display: inline-flex; }
+.grid { display: grid; }
+.inline-grid { display: inline-grid; }
+.hidden { display: none; }
+
+/* Flex utilities */
+.flex-row { flex-direction: row; }
+.flex-row-reverse { flex-direction: row-reverse; }
+.flex-col { flex-direction: column; }
+.flex-col-reverse { flex-direction: column-reverse; }
+
+.flex-wrap { flex-wrap: wrap; }
+.flex-nowrap { flex-wrap: nowrap; }
+.flex-wrap-reverse { flex-wrap: wrap-reverse; }
+
+.justify-start { justify-content: flex-start; }
+.justify-end { justify-content: flex-end; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.justify-around { justify-content: space-around; }
+.justify-evenly { justify-content: space-evenly; }
+
+.items-start { align-items: flex-start; }
+.items-end { align-items: flex-end; }
+.items-center { align-items: center; }
+.items-baseline { align-items: baseline; }
+.items-stretch { align-items: stretch; }
+
+/* Grid utilities */
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.grid-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.grid-cols-12 { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+
+/* Gap */
+.gap-0 { gap: var(--spacing-0); }
+.gap-1 { gap: var(--spacing-1); }
+.gap-2 { gap: var(--spacing-2); }
+.gap-3 { gap: var(--spacing-3); }
+.gap-4 { gap: var(--spacing-4); }
+.gap-5 { gap: var(--spacing-5); }
+.gap-6 { gap: var(--spacing-6); }
+.gap-8 { gap: var(--spacing-8); }
+.gap-10 { gap: var(--spacing-10); }
+.gap-12 { gap: var(--spacing-12); }
+.gap-16 { gap: var(--spacing-16); }
+.gap-20 { gap: var(--spacing-20); }
+.gap-24 { gap: var(--spacing-24); }
+.gap-32 { gap: var(--spacing-32); }
+
+/* ====================
+   Responsive Utilities
+   ==================== */
+
+/* Mobile first approach */
+@media (min-width: 640px) {
+  .sm\:block { display: block; }
+  .sm\:hidden { display: none; }
+  .sm\:flex { display: flex; }
+  .sm\:grid { display: grid; }
+  
+  .sm\:text-sm { font-size: var(--text-sm); }
+  .sm\:text-base { font-size: var(--text-base); }
+  .sm\:text-lg { font-size: var(--text-lg); }
+  .sm\:text-xl { font-size: var(--text-xl); }
+  .sm\:text-2xl { font-size: var(--text-2xl); }
+  .sm\:text-3xl { font-size: var(--text-3xl); }
+  .sm\:text-4xl { font-size: var(--text-4xl); }
+  .sm\:text-5xl { font-size: var(--text-5xl); }
+  
+  .sm\:px-4 { padding-left: var(--spacing-4); padding-right: var(--spacing-4); }
+  .sm\:px-6 { padding-left: var(--spacing-6); padding-right: var(--spacing-6); }
+  .sm\:px-8 { padding-left: var(--spacing-8); padding-right: var(--spacing-8); }
+  
+  .sm\:py-4 { padding-top: var(--spacing-4); padding-bottom: var(--spacing-4); }
+  .sm\:py-6 { padding-top: var(--spacing-6); padding-bottom: var(--spacing-6); }
+  .sm\:py-8 { padding-top: var(--spacing-8); padding-bottom: var(--spacing-8); }
+}
+
+@media (min-width: 768px) {
+  .md\:block { display: block; }
+  .md\:hidden { display: none; }
+  .md\:flex { display: flex; }
+  .md\:grid { display: grid; }
+  
+  .md\:text-lg { font-size: var(--text-lg); }
+  .md\:text-xl { font-size: var(--text-xl); }
+  .md\:text-2xl { font-size: var(--text-2xl); }
+  .md\:text-3xl { font-size: var(--text-3xl); }
+  .md\:text-4xl { font-size: var(--text-4xl); }
+  .md\:text-5xl { font-size: var(--text-5xl); }
+  .md\:text-6xl { font-size: var(--text-6xl); }
+  
+  .md\:px-6 { padding-left: var(--spacing-6); padding-right: var(--spacing-6); }
+  .md\:px-8 { padding-left: var(--spacing-8); padding-right: var(--spacing-8); }
+  .md\:px-12 { padding-left: var(--spacing-12); padding-right: var(--spacing-12); }
+  
+  .md\:py-6 { padding-top: var(--spacing-6); padding-bottom: var(--spacing-6); }
+  .md\:py-8 { padding-top: var(--spacing-8); padding-bottom: var(--spacing-8); }
+  .md\:py-12 { padding-top: var(--spacing-12); padding-bottom: var(--spacing-12); }
+}
+
+@media (min-width: 1024px) {
+  .lg\:block { display: block; }
+  .lg\:hidden { display: none; }
+  .lg\:flex { display: flex; }
+  .lg\:grid { display: grid; }
+  
+  .lg\:text-xl { font-size: var(--text-xl); }
+  .lg\:text-2xl { font-size: var(--text-2xl); }
+  .lg\:text-3xl { font-size: var(--text-3xl); }
+  .lg\:text-4xl { font-size: var(--text-4xl); }
+  .lg\:text-5xl { font-size: var(--text-5xl); }
+  .lg\:text-6xl { font-size: var(--text-6xl); }
+  .lg\:text-7xl { font-size: var(--text-7xl); }
+  
+  .lg\:px-8 { padding-left: var(--spacing-8); padding-right: var(--spacing-8); }
+  .lg\:px-12 { padding-left: var(--spacing-12); padding-right: var(--spacing-12); }
+  .lg\:px-16 { padding-left: var(--spacing-16); padding-right: var(--spacing-16); }
+  
+  .lg\:py-8 { padding-top: var(--spacing-8); padding-bottom: var(--spacing-8); }
+  .lg\:py-12 { padding-top: var(--spacing-12); padding-bottom: var(--spacing-12); }
+  .lg\:py-16 { padding-top: var(--spacing-16); padding-bottom: var(--spacing-16); }
+}
+
+@media (min-width: 1280px) {
+  .xl\:block { display: block; }
+  .xl\:hidden { display: none; }
+  .xl\:flex { display: flex; }
+  .xl\:grid { display: grid; }
+  
+  .xl\:text-2xl { font-size: var(--text-2xl); }
+  .xl\:text-3xl { font-size: var(--text-3xl); }
+  .xl\:text-4xl { font-size: var(--text-4xl); }
+  .xl\:text-5xl { font-size: var(--text-5xl); }
+  .xl\:text-6xl { font-size: var(--text-6xl); }
+  .xl\:text-7xl { font-size: var(--text-7xl); }
+  .xl\:text-8xl { font-size: var(--text-8xl); }
+  
+  .xl\:px-12 { padding-left: var(--spacing-12); padding-right: var(--spacing-12); }
+  .xl\:px-16 { padding-left: var(--spacing-16); padding-right: var(--spacing-16); }
+  .xl\:px-20 { padding-left: var(--spacing-20); padding-right: var(--spacing-20); }
+  
+  .xl\:py-12 { padding-top: var(--spacing-12); padding-bottom: var(--spacing-12); }
+  .xl\:py-16 { padding-top: var(--spacing-16); padding-bottom: var(--spacing-16); }
+  .xl\:py-20 { padding-top: var(--spacing-20); padding-bottom: var(--spacing-20); }
+}
+
+@media (min-width: 1536px) {
+  .\2xl\:text-sm { font-size: var(--text-sm); }
+  .\2xl\:text-base { font-size: var(--text-base); }
+  .\2xl\:text-lg { font-size: var(--text-lg); }
+  .\2xl\:text-xl { font-size: var(--text-xl); }
+  .\2xl\:text-2xl { font-size: var(--text-2xl); }
+  .\2xl\:text-3xl { font-size: var(--text-3xl); }
+  .\2xl\:text-4xl { font-size: var(--text-4xl); }
+  .\2xl\:text-5xl { font-size: var(--text-5xl); }
+  .\2xl\:text-6xl { font-size: var(--text-6xl); }
+  .\2xl\:text-7xl { font-size: var(--text-7xl); }
+  .\2xl\:text-8xl { font-size: var(--text-8xl); }
+  .\2xl\:text-9xl { font-size: var(--text-9xl); }
+}
