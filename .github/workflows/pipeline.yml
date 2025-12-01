@@ -1,4 +1,4 @@
-name: bookstore
+name: build-images
 
 on:
   push:
@@ -14,7 +14,7 @@ env:
 
 jobs:
   build_and_push:
-    name: Build and Push Backend & Frontend Images
+    name: Build & Push Images to ECR
     runs-on: ubuntu-latest
 
     permissions:
@@ -23,7 +23,7 @@ jobs:
 
     steps:
 
-      - name: Checkout repository
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Configure AWS Credentials
@@ -36,12 +36,34 @@ jobs:
       - name: Verify AWS Identity
         run: aws sts get-caller-identity
 
-      - name: Manual Login to ECR
+      - name: Login to Amazon ECR (Manual Login)
         run: |
           aws ecr get-login-password --region $AWS_REGION | \
           docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 
-      # ---------------------- FRONTEND IMAGE ------------------------
+      # ---------------------------------------------------------------------
+      # BACKEND IMAGE (Spring Boot)
+      # ---------------------------------------------------------------------
+      - name: Build Backend Image
+        run: |
+          docker build -t $BACKEND_REPOSITORY:latest -f ./Dockerfile .
+
+      - name: Tag Backend Image
+        run: |
+          docker tag $BACKEND_REPOSITORY:latest \
+            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPOSITORY:latest
+
+          docker tag $BACKEND_REPOSITORY:latest \
+            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPOSITORY:${{ github.sha }}
+
+      - name: Push Backend Image
+        run: |
+          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPOSITORY:latest
+          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPOSITORY:${{ github.sha }}
+
+      # ---------------------------------------------------------------------
+      # FRONTEND IMAGE (React)
+      # ---------------------------------------------------------------------
       - name: Build Frontend Image
         run: |
           docker build -t $FRONTEND_REPOSITORY:latest ./Frontend
@@ -58,21 +80,3 @@ jobs:
         run: |
           docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPOSITORY:latest
           docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPOSITORY:${{ github.sha }}
-
-      # ---------------------- BACKEND IMAGE ------------------------
-      - name: Build Backend Image
-        run: |
-          docker build -t $BACKEND_REPOSITORY:latest ./Backend
-
-      - name: Tag Backend Image
-        run: |
-          docker tag $BACKEND_REPOSITORY:latest \
-            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPOSITORY:latest
-
-          docker tag $BACKEND_REPOSITORY:latest \
-            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPOSITORY:${{ github.sha }}
-
-      - name: Push Backend Image
-        run: |
-          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPOSITORY:latest
-          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPOSITORY:${{ github.sha }}
