@@ -8,6 +8,7 @@ on:
 
 env:
   AWS_REGION: us-east-2
+  AWS_ACCOUNT_ID: 430006376054
   BACKEND_REPOSITORY: bookstore-backend
   FRONTEND_REPOSITORY: bookstore-frontend
 
@@ -32,33 +33,46 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+      - name: Verify AWS Identity
+        run: aws sts get-caller-identity
 
-      - name: Check ECR Login Status
+      - name: Manual Login to ECR
         run: |
-          echo "ECR Login successful. Registry: ${{ steps.login-ecr.outputs.registry }}"
-          docker info
-      - name: Debug ECR Registry Output
-        run: echo "Registry is: ${{ steps.login-ecr.outputs.registry }}"
-
-
+          aws ecr get-login-password --region $AWS_REGION | \
+          docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 
       # ---------------------- FRONTEND IMAGE ------------------------
       - name: Build Frontend Image
         run: |
-          docker build -t ${{ env.FRONTEND_REPOSITORY }}:latest ./Frontend
+          docker build -t $FRONTEND_REPOSITORY:latest ./Frontend
 
       - name: Tag Frontend Image
         run: |
-          docker tag ${{ env.FRONTEND_REPOSITORY }}:latest \
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.FRONTEND_REPOSITORY }}:latest
+          docker tag $FRONTEND_REPOSITORY:latest \
+            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPOSITORY:latest
 
-          docker tag ${{ env.FRONTEND_REPOSITORY }}:latest \
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.FRONTEND_REPOSITORY }}:${{ github.sha }}
+          docker tag $FRONTEND_REPOSITORY:latest \
+            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPOSITORY:${{ github.sha }}
 
       - name: Push Frontend Image
         run: |
-          docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.FRONTEND_REPOSITORY }}:latest
-          docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.FRONTEND_REPOSITORY }}:${{ github.sha }}
+          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPOSITORY:latest
+          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPOSITORY:${{ github.sha }}
+
+      # ---------------------- BACKEND IMAGE ------------------------
+      - name: Build Backend Image
+        run: |
+          docker build -t $BACKEND_REPOSITORY:latest ./Backend
+
+      - name: Tag Backend Image
+        run: |
+          docker tag $BACKEND_REPOSITORY:latest \
+            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPOSITORY:latest
+
+          docker tag $BACKEND_REPOSITORY:latest \
+            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPOSITORY:${{ github.sha }}
+
+      - name: Push Backend Image
+        run: |
+          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPOSITORY:latest
+          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPOSITORY:${{ github.sha }}
