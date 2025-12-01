@@ -10,7 +10,7 @@ on:
 
 env:
   # Define your ECR Repository Names and AWS Region
-  AWS_REGION: ${{ secrets.AWS_REGION }}
+  AWS_REGION: us-east-2
   BACKEND_REPOSITORY: bookstore-backend # ECR repo name for Spring Boot app
   FRONTEND_REPOSITORY: bookstore-frontend # ECR repo name for React app
 
