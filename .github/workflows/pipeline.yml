@@ -80,3 +80,20 @@ jobs:
         run: |
           docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPOSITORY:latest
           docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPOSITORY:${{ github.sha }}
+
+
+       # ---------------- RUN CONTAINERS ----------------
+      - name: Run Backend & Frontend Containers
+        run: |
+          # Remove existing containers if they exist
+          docker rm -f backend-container || true
+          docker rm -f frontend-container || true
+
+          # Run backend
+          docker run -d --name backend-container -p 8080:8080 \
+            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPOSITORY:latest
+
+          # Run frontend
+          docker run -d --name frontend-container -p 3000:80 \
+            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPOSITORY:latest
+
