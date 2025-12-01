@@ -1,98 +1,89 @@
 name: bookstore
-
 on:
-  # Triggers the workflow on push events to the main branch
   push:
     branches:
       - main
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-
 env:
-  # Define your ECR Repository Names and AWS Region
   AWS_REGION: us-east-2
-  BACKEND_REPOSITORY: bookstore-backend # ECR repo name for Spring Boot app
-  FRONTEND_REPOSITORY: bookstore-frontend # ECR repo name for React app
-
+  # Define the ECR repository names for your two custom applications
+  BACKEND_REPOSITORY: bookstore-backend
+  FRONTEND_REPOSITORY: bookstore-frontend
 jobs:
   build_and_push:
-    name: Build, Tag, and Push Images
+    name: Build, Tag, and Push Images to ECR
     runs-on: ubuntu-latest
     permissions:
-      contents: read # To checkout the code
-      id-token: write # Required for secure AWS authentication (if using OIDC)
+      contents: read # Required to clone the repository code
+      id-token: write # Required for AWS authentication (especially useful for OIDC)
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      # 1. Configure AWS credentials using provided secrets
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      # 2. Login to Amazon ECR
+          aws-region: us-east-2
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
-
-      # 3. Define Image Tags (using Git SHA and 'latest')
-      - name: Set image tag variables
-        id: image_tag
-        run: |
-          # Use Git short SHA for an immutable tag
-          echo "IMAGE_TAG=$(echo $GITHUB_SHA | cut -c 1-8)" >> $GITHUB_OUTPUT
-          echo "LATEST_TAG=latest" >> $GITHUB_OUTPUT
-        shell: bash
-
-      # --- BACKEND (Spring Boot) BUILD AND PUSH ---
-      
+        
+      # ----------------------------------------------------------------
+      # 4. BACKEND (Spring Boot) BUILD AND PUSH
+      # ----------------------------------------------------------------
       - name: Build, tag, and push backend image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ steps.image_tag.outputs.IMAGE_TAG }}
-          LATEST_TAG: ${{ steps.image_tag.outputs.LATEST_TAG }}
         run: |
-          # The Dockerfile is located in the root context (./)
+          # Create an immutable tag from the first 8 characters of the Git SHA
+          IMAGE_TAG=$(echo $GITHUB_SHA | cut -c 1-8)
+          LATEST_TAG=latest
+          
+          # Construct the full ECR Image URIs
           IMAGE_URI_SHA=$ECR_REGISTRY/$BACKEND_REPOSITORY:$IMAGE_TAG
           IMAGE_URI_LATEST=$ECR_REGISTRY/$BACKEND_REPOSITORY:$LATEST_TAG
           
           echo "Building backend image: $IMAGE_URI_SHA"
           
-          # Build command: uses the Dockerfile in the root (current directory)
+          # Build the image using the Dockerfile in the root context (./)
+          # Tags the image with both the SHA and 'latest' tags
           docker build -t $IMAGE_URI_SHA -t $IMAGE_URI_LATEST .
           
           echo "Pushing backend images to ECR..."
+          # Push both tagged images to the Amazon ECR repository
           docker push $IMAGE_URI_SHA
           docker push $IMAGE_URI_LATEST
 
-      # --- FRONTEND (React) BUILD AND PUSH ---
-      
+      # ----------------------------------------------------------------
+      # 5. FRONTEND (React) BUILD AND PUSH
+      # ----------------------------------------------------------------
       - name: Build, tag, and push frontend image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ steps.image_tag.outputs.IMAGE_TAG }}
-          LATEST_TAG: ${{ steps.image_tag.outputs.LATEST_TAG }}
         run: |
-          # The Dockerfile is located in ./Frontend/Dockerfile
+          # Create image tags
+          IMAGE_TAG=$(echo $GITHUB_SHA | cut -c 1-8)
+          LATEST_TAG=latest
+          
+          # Construct the full ECR Image URIs
           IMAGE_URI_SHA=$ECR_REGISTRY/$FRONTEND_REPOSITORY:$IMAGE_TAG
           IMAGE_URI_LATEST=$ECR_REGISTRY/$FRONTEND_REPOSITORY:$LATEST_TAG
           
           echo "Building frontend image: $IMAGE_URI_SHA"
           
-          # Build command: specifies the Dockerfile (-f) and context (./Frontend)
-          # Note: Build arguments are hardcoded here based on your docker-compose file for demonstration. 
+          # Build the image using the Dockerfile located in the ./Frontend directory
+          # CRITICAL: Build arguments are now sourced from GitHub Secrets for security/deployability.
           docker build \
-            --build-arg REACT_APP_API_BASE_URL=http://localhost:8080/api \
-            --build-arg REACT_APP_STRIPE_PUBLISHABLE_KEY=your-stripe-publishable-key \
+            --build-arg REACT_APP_API_BASE_URL=${{ secrets.REACT_APP_API_BASE_URL }} \
+            --build-arg REACT_APP_STRIPE_PUBLISHABLE_KEY=${{ secrets.REACT_APP_STRIPE_PUBLISHABLE_KEY }} \
             -f ./Frontend/Dockerfile \
             -t $IMAGE_URI_SHA \
             -t $IMAGE_URI_LATEST \
             ./Frontend
             
           echo "Pushing frontend images to ECR..."
+          # Push both tagged images to the Amazon ECR repository
           docker push $IMAGE_URI_SHA
           docker push $IMAGE_URI_LATEST
