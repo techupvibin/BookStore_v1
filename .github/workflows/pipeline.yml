@@ -40,6 +40,8 @@ jobs:
         run: |
           echo "ECR Login successful. Registry: ${{ steps.login-ecr.outputs.registry }}"
           docker info
+      - name: Debug ECR Registry Output
+        run: echo "Registry is: ${{ steps.login-ecr.outputs.registry }}"
 
 
 
