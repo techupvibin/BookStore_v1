@@ -10,55 +10,63 @@
 name: Deploy to EC2
 
 on:
-  workflow_dispatch:   # Manual trigger from GitHub Actions UI
+  workflow_dispatch:   # Manual trigger
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
+      # ---------------------------
+      # Checkout repository
+      # ---------------------------
       - name: Checkout code
         uses: actions/checkout@v3
 
       # ---------------------------
-      # Set up SSH key for EC2
+      # Set up SSH key
       # ---------------------------
-      - name: Copy SSH key
+      - name: Setup SSH Key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2_key
           chmod 600 ~/.ssh/ec2_key
 
-      - name: Test SSH Connection (Optional)
+      # ---------------------------
+      # Test SSH Connection (Optional but recommended)
+      # ---------------------------
+      - name: Test SSH Connection
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2_key ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "echo 'SSH connection successful!'"
 
       # ---------------------------
-      # Deploy on EC2
+      # Deploy Docker containers
       # ---------------------------
-      - name: Deploy Docker containers
+      - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2_key ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
 
-          # Login to ECR
+          # Login to AWS ECR
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
             | docker login --username AWS --password-stdin ${{ secrets.ECR_URI }}
 
-          # Pull latest images
+          # Pull latest Docker images
           docker pull ${{ secrets.ECR_URI }}/bookstore-backend:latest
           docker pull ${{ secrets.ECR_URI }}/bookstore-frontend:latest
 
-          # Stop and remove old containers (ignore errors)
+          # Stop old containers (ignore errors if not running)
           docker stop backend-container || true
           docker stop frontend-container || true
+
+          # Remove old containers (ignore errors)
           docker rm backend-container || true
           docker rm frontend-container || true
 
-          # Run backend
+          # Run backend container
           docker run -d --name backend-container -p 8080:8080 \
             ${{ secrets.ECR_URI }}/bookstore-backend:latest
 
-          # Run frontend
+          # Run frontend container
           docker run -d --name frontend-container -p 80:80 \
             ${{ secrets.ECR_URI }}/bookstore-frontend:latest
 
