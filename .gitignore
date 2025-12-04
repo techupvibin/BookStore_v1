@@ -118,3 +118,18 @@ dist/
 *.log
 *.tmp
 *.temp
+
+## Terraform cache & provider binaries
+.terraform/
+.terraform.lock.hcl
+
+# Local zip files / large downloads
+*.zip
+*.tar.gz
+
+# OS / IDE files
+*.swp
+*.DS_Store
+.vscode/
+
+
