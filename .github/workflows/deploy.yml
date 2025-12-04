@@ -2,9 +2,9 @@ name: Deploy to EC2
 
 on:
   workflow_run:
-    workflows: ["build-images"]   # Trigger when build-images workflow completes
-    types:
-      - completed
+#    workflows: ["build-images"]   # Trigger when build-images workflow completes
+#    types:
+#      - completed
 
 jobs:
   deploy:
