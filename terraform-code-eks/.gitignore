@@ -1,0 +1,50 @@
+# -------- Terraform --------
+.terraform/
+*.tfstate
+*.tfstate.*
+*.backup
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Terraform variables (secrets)
+*.tfvars
+*.tfvars.json
+
+# ---------------------------
+# Java / Maven
+# ---------------------------
+target/
+*.class
+*.log
+
+# ---------------------------
+# IDE / OS files
+# ---------------------------
+.vscode/
+.idea/
+*.iml
+*.swp
+.DS_Store
+
+# ---------------------------
+# Docker
+# ---------------------------
+*.tar
+
+# ---------------------------
+# Kubernetes local files
+# ---------------------------
+*.kubeconfig
+
+# ---------------------------
+# Node / frontend (if any)
+# ---------------------------
+node_modules/
+
+# ---------------------------
+# Env files
+# ---------------------------
+.env
