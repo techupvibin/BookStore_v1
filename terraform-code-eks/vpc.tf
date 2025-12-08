@@ -2,7 +2,7 @@ module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.1.2"
 
-  name                 = "java-eks-vpc"
+  name                 = "Bookstore-eks-vpc"
   cidr                 = var.vpc_cidr
   azs                  = ["us-east-2a", "us-east-2b"]
   private_subnets      = ["10.0.1.0/24", "10.0.2.0/24"]

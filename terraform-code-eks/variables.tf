@@ -3,7 +3,7 @@ variable "aws_region" {
 }
 
 variable "cluster_name" {
-  default = "java-eks-cluster"
+  default = "Bookstore-eks-cluster"
 }
 
 variable "vpc_cidr" {
