@@ -157,7 +157,6 @@ resource "aws_eks_node_group" "this" {
   }
 
   instance_types = [var.node_instance_type]
-  ami_type       = "AL2_x86_64"
 
   depends_on = [
     aws_iam_role_policy_attachment.node_worker,
