@@ -8,7 +8,7 @@ on:
   workflow_dispatch:   # manual trigger
  
 env:
-  AWS_REGION: eu-west-3
+  AWS_REGION: us-east-2
   TERRAFORM_WORKING_DIR: terraform-code-eks
  
 jobs:
@@ -46,6 +46,13 @@ jobs:
       # 5️⃣ Terraform Plan
       - name: Terraform Plan
         run: terraform -chdir=${{ env.TERRAFORM_WORKING_DIR }} plan -out=tfplan -input=false
+
+      # ✅ Import existing IAM roles (Fix for EntityAlreadyExists error)
+      - name: Import existing IAM roles
+        run: |
+          terraform -chdir=${{ env.TERRAFORM_WORKING_DIR }} import aws_iam_role.eks_cluster bookstore-eks-cluster-role
+          terraform -chdir=${{ env.TERRAFORM_WORKING_DIR }} import aws_iam_role.node_group bookstore-eks-node-role
+        continue-on-error: true
  
       # 6️⃣ Terraform Apply
       - name: Terraform Apply
