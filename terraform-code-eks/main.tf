@@ -19,13 +19,7 @@ provider "aws" {
   region = "us-east-2"
 }
 
-backend "s3" {
-    bucket         = "bookstore-eks-terraform-state"
-    key            = "eks/terraform.tfstate"
-    region         = "us-east-2"
-    dynamodb_table = "terraform-locks"
-    encrypt        = true
-  }
+
 
 
 ####################
