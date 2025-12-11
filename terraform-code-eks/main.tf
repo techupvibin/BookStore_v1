@@ -264,5 +264,5 @@ output "cluster_endpoint" {
 }
 
 output "frontend_url" {
-  value = kubernetes_service.bookstore_service.status[0].load_balancer[0].ingress[0].hostname
+  value = kubernetes_service.bookstore_service_v1.status[0].load_balancer[0].ingress[0].hostname
 }
