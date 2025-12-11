@@ -1,6 +1,4 @@
 terraform {
-  required_version = ">= 1.5.0"
-
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -11,6 +9,7 @@ terraform {
       version = "~> 2.27"
     }
   }
+  required_version = ">= 1.5.0"
 }
 
 provider "aws" {
@@ -40,14 +39,9 @@ variable "account_id" {
   default = "430006376054"
 }
 
-variable "frontend_image" {
+variable "ecr_image" {
   type    = string
   default = "430006376054.dkr.ecr.us-east-2.amazonaws.com/bookstore-frontend:latest"
-}
-
-variable "backend_image" {
-  type    = string
-  default = "430006376054.dkr.ecr.us-east-2.amazonaws.com/bookstore-backend:latest"
 }
 
 ####################
@@ -57,7 +51,7 @@ data "aws_availability_zones" "available" {}
 
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
-  tags       = { Name = "${var.cluster_name}-vpc" }
+  tags = { Name = "${var.cluster_name}-vpc" }
 }
 
 resource "aws_internet_gateway" "main" {
@@ -122,8 +116,8 @@ resource "aws_security_group" "eks_nodes_sg" {
 
   # Allow traffic from ELB SG
   ingress {
-    from_port       = 80
-    to_port         = 80
+    from_port       = 8080
+    to_port         = 8080
     protocol        = "tcp"
     security_groups = [aws_security_group.eks_elb_sg.id]
   }
@@ -239,6 +233,109 @@ resource "aws_eks_node_group" "this" {
 }
 
 ####################
+# IAM Policy for AWS Load Balancer Controller
+####################
+resource "aws_iam_policy" "aws_lb_controller_policy" {
+  name        = "${var.cluster_name}-aws-lb-controller-policy"
+  description = "IAM policy for AWS Load Balancer Controller"
+
+  policy = data.aws_iam_policy_document.lb_controller_policy.json
+}
+
+data "aws_iam_policy_document" "lb_controller_policy" {
+  statement {
+    effect    = "Allow"
+    actions   = [
+      "acm:DescribeCertificate",
+      "acm:ListCertificates",
+      "acm:GetCertificate",
+      "ec2:AuthorizeSecurityGroupIngress",
+      "ec2:RevokeSecurityGroupIngress",
+      "ec2:CreateSecurityGroup",
+      "ec2:DeleteSecurityGroup",
+      "ec2:DescribeSecurityGroups",
+      "ec2:DescribeSubnets",
+      "ec2:DescribeVpcs",
+      "ec2:DescribeInstances",
+      "ec2:ModifyInstanceAttribute",
+      "ec2:DescribeTags",
+      "elasticloadbalancing:*",
+      "iam:CreateServiceLinkedRole",
+      "iam:GetServerCertificate",
+      "iam:ListServerCertificates",
+      "tag:GetResources",
+      "shield:GetSubscriptionState",
+      "shield:DescribeProtection",
+      "shield:CreateProtection",
+      "shield:DeleteProtection"
+    ]
+    resources = ["*"]
+  }
+}
+
+####################
+# IAM Role for AWS Load Balancer Controller
+####################
+resource "aws_iam_role" "aws_lb_controller_sa_role" {
+  name = "${var.cluster_name}-aws-lb-controller-sa"
+  assume_role_policy = data.aws_iam_policy_document.lb_controller_sa_assume.json
+}
+
+data "aws_iam_policy_document" "lb_controller_sa_assume" {
+  statement {
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["eks.amazonaws.com"]
+    }
+    actions = ["sts:AssumeRole"]
+    condition {
+      test     = "StringEquals"
+      variable = "eks.amazonaws.com/role-arn"
+      values   = [aws_eks_cluster.this.arn]
+    }
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "aws_lb_controller_attach" {
+  role       = aws_iam_role.aws_lb_controller_sa_role.name
+  policy_arn = aws_iam_policy.aws_lb_controller_policy.arn
+}
+
+####################
+# Helm provider
+####################
+provider "helm" {
+  kubernetes = {
+    host                   = aws_eks_cluster.this.endpoint
+    cluster_ca_certificate = base64decode(aws_eks_cluster.this.certificate_authority[0].data)
+    token                  = data.aws_eks_cluster_auth.this.token
+  }
+}
+
+
+####################
+# AWS Load Balancer Controller Helm Release
+####################
+resource "helm_release" "aws_lb_controller" {
+  name       = "aws-load-balancer-controller"
+  repository = "https://aws.github.io/eks-charts"
+  chart      = "aws-load-balancer-controller"
+  namespace  = "kube-system"
+
+  set = [
+    { name = "clusterName", value = aws_eks_cluster.this.name },
+    { name = "serviceAccount.create", value = "false" },
+    { name = "serviceAccount.name", value = "aws-load-balancer-controller" },
+    { name = "region", value = "us-east-2" },
+    { name = "vpcId", value = aws_vpc.main.id }
+  ]
+
+  depends_on = [aws_iam_role_policy_attachment.aws_lb_controller_attach]
+}
+
+
+####################
 # Kubernetes Provider
 ####################
 data "aws_eks_cluster_auth" "this" {
@@ -252,31 +349,30 @@ provider "kubernetes" {
 }
 
 ####################
-# Deploy BookStore App
+# Kubernetes Deployment
 ####################
-# Backend Deployment
-resource "kubernetes_deployment_v1" "backend" {
+resource "kubernetes_deployment_v1" "bookstore" {
   metadata {
-    name   = "bookstore-backend"
-    labels = { app = "bookstore-backend" }
+    name = "bookstore"
+    labels = { app = "bookstore" }
   }
 
   spec {
     replicas = 2
 
     selector {
-      match_labels = { app = "bookstore-backend" }
+      match_labels = { app = "bookstore" }
     }
 
     template {
       metadata {
-        labels = { app = "bookstore-backend" }
+        labels = { app = "bookstore" }
       }
 
       spec {
         container {
-          name  = "backend"
-          image = var.backend_image
+          name  = "bookstore"
+          image = var.ecr_image
           port {
             container_port = 8080
           }
@@ -286,82 +382,32 @@ resource "kubernetes_deployment_v1" "backend" {
   }
 }
 
-# Backend Service (ClusterIP)
-resource "kubernetes_service_v1" "backend_service" {
-  metadata { name = "bookstore-backend" }
-
-  spec {
-    selector = { app = "bookstore-backend" }
-    port {
-      port        = 8080
-      target_port = 8080
-    }
-    type = "ClusterIP"
-  }
-}
-
-# Frontend Deployment
-resource "kubernetes_deployment_v1" "frontend" {
+####################
+# Kubernetes Service (LoadBalancer)
+####################
+resource "kubernetes_service_v1" "bookstore_service" {
   metadata {
-    name   = "bookstore-frontend"
-    labels = { app = "bookstore-frontend" }
-  }
-
-  spec {
-    replicas = 2
-
-    selector {
-      match_labels = { app = "bookstore-frontend" }
-    }
-
-    template {
-      metadata {
-        labels = { app = "bookstore-frontend" }
-      }
-
-      spec {
-        container {
-          name  = "frontend"
-          image = var.frontend_image
-          port {
-            container_port = 80
-          }
-          env {
-            name  = "BACKEND_URL"
-            value = "http://bookstore-backend.default.svc.cluster.local:8080"
-          }
-        }
-      }
-    }
-  }
-}
-
-# Frontend Service (LoadBalancer)
-resource "kubernetes_service_v1" "frontend_service" {
-  metadata {
-    name = "bookstore-frontend"
+    name = "bookstore-service"
     annotations = {
       "service.beta.kubernetes.io/aws-load-balancer-security-groups" = aws_security_group.eks_elb_sg.id
     }
   }
 
   spec {
-    selector = { app = "bookstore-frontend" }
+    selector = { app = "bookstore" }
+    type     = "LoadBalancer"
+
     port {
       port        = 80
-      target_port = 80
+      target_port = 8080
     }
-    type = "LoadBalancer"
   }
 }
+
 
 ####################
 # Outputs
 ####################
-output "frontend_url" {
-  value = kubernetes_service_v1.frontend_service.status[0].load_balancer[0].ingress[0].hostname
-}
-
 output "cluster_name" {
   value = aws_eks_cluster.this.name
 }
@@ -369,3 +415,8 @@ output "cluster_name" {
 output "cluster_endpoint" {
   value = aws_eks_cluster.this.endpoint
 }
+
+output "frontend_url" {
+  value = kubernetes_service_v1.bookstore_service.status[0].load_balancer[0].ingress[0].hostname
+}
+
