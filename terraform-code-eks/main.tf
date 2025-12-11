@@ -40,7 +40,7 @@ variable "account_id" {
 
 variable "ecr_image" {
   type    = string
-  default = "075bfd35905624b65751fcaf01de6646f5ba9f83:latest"
+  default = "430006376054.dkr.ecr.us-east-2.amazonaws.com/bookstore:latest"
 }
 
 
@@ -191,9 +191,9 @@ data "aws_eks_cluster_auth" "this" {
 ####################
 # Kubernetes Deployment for ECR image
 ####################
-resource "kubernetes_deployment" "bookstore_app" {
+resource "kubernetes_deployment" "bookstore" {
   metadata {
-    name = "bookstore-app"
+    name = "bookstore"
     labels = {
       app = "bookstore"
     }
