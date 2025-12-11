@@ -191,7 +191,7 @@ data "aws_eks_cluster_auth" "this" {
 ####################
 # Kubernetes Deployment for ECR image
 ####################
-resource "kubernetes_deployment" "bookstore" {
+resource "kubernetes_deployment_v1" "bookstore" {
   metadata {
     name = "bookstore"
     labels = {
@@ -231,7 +231,7 @@ resource "kubernetes_deployment" "bookstore" {
 ####################
 # Kubernetes Service (LoadBalancer)
 ####################
-resource "kubernetes_service" "bookstore_service" {
+resource "kubernetes_service_v1" "bookstore_service" {
   metadata {
     name = "bookstore-service"
   }
