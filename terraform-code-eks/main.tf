@@ -216,6 +216,7 @@ resource "aws_eks_node_group" "this" {
   node_group_name = "${var.cluster_name}-nodes"
   node_role_arn   = aws_iam_role.node_group.arn
   subnet_ids      = aws_subnet.public[*].id
+
   scaling_config {
     desired_size = var.node_group_desired
     min_size     = 1
@@ -224,16 +225,13 @@ resource "aws_eks_node_group" "this" {
 
   instance_types = [var.node_instance_type]
 
-  
-
-  # Attach nodes SG
-  node_group_name = "${var.cluster_name}-nodes"
   depends_on = [
     aws_iam_role_policy_attachment.node_worker,
     aws_iam_role_policy_attachment.node_ecr,
     aws_iam_role_policy_attachment.node_cni
   ]
 }
+
 
 ####################
 # Kubernetes Provider
