@@ -4,6 +4,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.27"
+    }
   }
   required_version = ">= 1.5.0"
 }
@@ -11,9 +15,6 @@ terraform {
 provider "aws" {
   region = "us-east-2"
 }
-
-
-
 
 ####################
 # Variables
@@ -43,10 +44,8 @@ variable "ecr_image" {
   default = "430006376054.dkr.ecr.us-east-2.amazonaws.com/bookstore-frontend:latest"
 }
 
-
-
 ####################
-# VPC
+# VPC & Networking
 ####################
 data "aws_availability_zones" "available" {}
 
@@ -83,14 +82,68 @@ resource "aws_route_table_association" "public_assoc" {
 }
 
 ####################
+# Security Groups
+####################
+# ELB SG
+resource "aws_security_group" "eks_elb_sg" {
+  name        = "${var.cluster_name}-elb-sg"
+  description = "Allow HTTP from Internet"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description = "Allow HTTP from anywhere"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = { Name = "${var.cluster_name}-elb-sg" }
+}
+
+# Node SG
+resource "aws_security_group" "eks_nodes_sg" {
+  name        = "${var.cluster_name}-nodes-sg"
+  description = "Allow traffic from ELB"
+  vpc_id      = aws_vpc.main.id
+
+  # Allow traffic from ELB SG
+  ingress {
+    from_port       = 8080
+    to_port         = 8080
+    protocol        = "tcp"
+    security_groups = [aws_security_group.eks_elb_sg.id]
+  }
+
+  # Allow all traffic within SG (for node communication)
+  ingress {
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
+    self      = true
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = { Name = "${var.cluster_name}-nodes-sg" }
+}
+
+####################
 # IAM Roles
 ####################
 # Cluster Role
-resource "aws_iam_role" "eks_cluster" {
-  name = "${var.cluster_name}-cluster-role"
-  assume_role_policy = data.aws_iam_policy_document.eks_cluster_assume.json
-}
-
 data "aws_iam_policy_document" "eks_cluster_assume" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -101,17 +154,17 @@ data "aws_iam_policy_document" "eks_cluster_assume" {
   }
 }
 
+resource "aws_iam_role" "eks_cluster" {
+  name               = "${var.cluster_name}-cluster-role"
+  assume_role_policy = data.aws_iam_policy_document.eks_cluster_assume.json
+}
+
 resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
   role       = aws_iam_role.eks_cluster.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
 }
 
-# Node Group Role
-resource "aws_iam_role" "node_group" {
-  name = "${var.cluster_name}-node-role"
-  assume_role_policy = data.aws_iam_policy_document.node_assume.json
-}
-
+# Node Role
 data "aws_iam_policy_document" "node_assume" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -120,6 +173,11 @@ data "aws_iam_policy_document" "node_assume" {
       identifiers = ["ec2.amazonaws.com"]
     }
   }
+}
+
+resource "aws_iam_role" "node_group" {
+  name               = "${var.cluster_name}-node-role"
+  assume_role_policy = data.aws_iam_policy_document.node_assume.json
 }
 
 resource "aws_iam_role_policy_attachment" "node_worker" {
@@ -147,11 +205,10 @@ resource "aws_eks_cluster" "this" {
   vpc_config {
     subnet_ids             = aws_subnet.public[*].id
     endpoint_public_access = true
+    public_access_cidrs    = ["0.0.0.0/0"]
   }
 
-  depends_on = [
-    aws_iam_role_policy_attachment.eks_cluster_policy
-  ]
+  depends_on = [aws_iam_role_policy_attachment.eks_cluster_policy]
 }
 
 resource "aws_eks_node_group" "this" {
@@ -159,7 +216,6 @@ resource "aws_eks_node_group" "this" {
   node_group_name = "${var.cluster_name}-nodes"
   node_role_arn   = aws_iam_role.node_group.arn
   subnet_ids      = aws_subnet.public[*].id
-
   scaling_config {
     desired_size = var.node_group_desired
     min_size     = 1
@@ -168,58 +224,55 @@ resource "aws_eks_node_group" "this" {
 
   instance_types = [var.node_instance_type]
 
+  
+
+  # Attach nodes SG
+  node_group_name = "${var.cluster_name}-nodes"
   depends_on = [
     aws_iam_role_policy_attachment.node_worker,
     aws_iam_role_policy_attachment.node_ecr,
-    aws_iam_role_policy_attachment.node_cni,
+    aws_iam_role_policy_attachment.node_cni
   ]
 }
 
 ####################
 # Kubernetes Provider
 ####################
+data "aws_eks_cluster_auth" "this" {
+  name = aws_eks_cluster.this.name
+}
+
 provider "kubernetes" {
   host                   = aws_eks_cluster.this.endpoint
   cluster_ca_certificate = base64decode(aws_eks_cluster.this.certificate_authority[0].data)
   token                  = data.aws_eks_cluster_auth.this.token
 }
 
-data "aws_eks_cluster_auth" "this" {
-  name = aws_eks_cluster.this.name
-}
-
 ####################
-# Kubernetes Deployment for ECR image
+# Kubernetes Deployment
 ####################
 resource "kubernetes_deployment_v1" "bookstore" {
   metadata {
     name = "bookstore"
-    labels = {
-      app = "bookstore"
-    }
+    labels = { app = "bookstore" }
   }
 
   spec {
     replicas = 2
 
     selector {
-      match_labels = {
-        app = "bookstore"
-      }
+      match_labels = { app = "bookstore" }
     }
 
     template {
       metadata {
-        labels = {
-          app = "bookstore"
-        }
+        labels = { app = "bookstore" }
       }
 
       spec {
         container {
           name  = "bookstore"
           image = var.ecr_image
-
           port {
             container_port = 8080
           }
@@ -228,20 +281,21 @@ resource "kubernetes_deployment_v1" "bookstore" {
     }
   }
 }
+
 ####################
 # Kubernetes Service (LoadBalancer)
 ####################
 resource "kubernetes_service_v1" "bookstore_service" {
   metadata {
     name = "bookstore-service"
+    annotations = {
+      "service.beta.kubernetes.io/aws-load-balancer-security-groups" = aws_security_group.eks_elb_sg.id
+    }
   }
 
   spec {
-    selector = {
-      app = "bookstore"
-    }
-
-    type = "LoadBalancer"
+    selector = { app = "bookstore" }
+    type     = "LoadBalancer"
 
     port {
       port        = 80
@@ -249,7 +303,6 @@ resource "kubernetes_service_v1" "bookstore_service" {
     }
   }
 }
-
 
 
 ####################
@@ -266,8 +319,4 @@ output "cluster_endpoint" {
 output "frontend_url" {
   value = kubernetes_service_v1.bookstore_service.status[0].load_balancer[0].ingress[0].hostname
 }
-
-
-
-
 
