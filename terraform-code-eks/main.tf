@@ -232,6 +232,124 @@ resource "aws_eks_node_group" "this" {
   ]
 }
 
+####################
+# IAM Policy for AWS Load Balancer Controller
+####################
+resource "aws_iam_policy" "aws_lb_controller_policy" {
+  name        = "${var.cluster_name}-aws-lb-controller-policy"
+  description = "IAM policy for AWS Load Balancer Controller"
+
+  policy = data.aws_iam_policy_document.lb_controller_policy.json
+}
+
+data "aws_iam_policy_document" "lb_controller_policy" {
+  statement {
+    effect    = "Allow"
+    actions   = [
+      "acm:DescribeCertificate",
+      "acm:ListCertificates",
+      "acm:GetCertificate",
+      "ec2:AuthorizeSecurityGroupIngress",
+      "ec2:RevokeSecurityGroupIngress",
+      "ec2:CreateSecurityGroup",
+      "ec2:DeleteSecurityGroup",
+      "ec2:DescribeSecurityGroups",
+      "ec2:DescribeSubnets",
+      "ec2:DescribeVpcs",
+      "ec2:DescribeInstances",
+      "ec2:ModifyInstanceAttribute",
+      "ec2:DescribeTags",
+      "elasticloadbalancing:*",
+      "iam:CreateServiceLinkedRole",
+      "iam:GetServerCertificate",
+      "iam:ListServerCertificates",
+      "tag:GetResources",
+      "shield:GetSubscriptionState",
+      "shield:DescribeProtection",
+      "shield:CreateProtection",
+      "shield:DeleteProtection"
+    ]
+    resources = ["*"]
+  }
+}
+
+####################
+# IAM Role for AWS Load Balancer Controller
+####################
+resource "aws_iam_role" "aws_lb_controller_sa_role" {
+  name = "${var.cluster_name}-aws-lb-controller-sa"
+  assume_role_policy = data.aws_iam_policy_document.lb_controller_sa_assume.json
+}
+
+data "aws_iam_policy_document" "lb_controller_sa_assume" {
+  statement {
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["eks.amazonaws.com"]
+    }
+    actions = ["sts:AssumeRole"]
+    condition {
+      test     = "StringEquals"
+      variable = "eks.amazonaws.com/role-arn"
+      values   = [aws_eks_cluster.this.arn]
+    }
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "aws_lb_controller_attach" {
+  role       = aws_iam_role.aws_lb_controller_sa_role.name
+  policy_arn = aws_iam_policy.aws_lb_controller_policy.arn
+}
+
+####################
+# Helm provider
+####################
+provider "helm" {
+  kubernetes {
+    host                   = aws_eks_cluster.this.endpoint
+    cluster_ca_certificate = base64decode(aws_eks_cluster.this.certificate_authority[0].data)
+    token                  = data.aws_eks_cluster_auth.this.token
+  }
+}
+
+####################
+# AWS Load Balancer Controller Helm Release
+####################
+resource "helm_release" "aws_lb_controller" {
+  name       = "aws-load-balancer-controller"
+  repository = "https://aws.github.io/eks-charts"
+  chart      = "aws-load-balancer-controller"
+  namespace  = "kube-system"
+
+  set {
+    name  = "clusterName"
+    value = aws_eks_cluster.this.name
+  }
+
+  set {
+    name  = "serviceAccount.create"
+    value = "false"
+  }
+
+  set {
+    name  = "serviceAccount.name"
+    value = "aws-load-balancer-controller"
+  }
+
+  set {
+    name  = "region"
+    value = "us-east-2"
+  }
+
+  set {
+    name  = "vpcId"
+    value = aws_vpc.main.id
+  }
+
+  depends_on = [aws_iam_role_policy_attachment.aws_lb_controller_attach]
+}
+
 
 ####################
 # Kubernetes Provider
