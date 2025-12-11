@@ -40,7 +40,7 @@ variable "account_id" {
 
 variable "ecr_image" {
   type    = string
-  default = "430006376054.dkr.ecr.us-east-2.amazonaws.com/bookstore:latest"
+  default = "430006376054.dkr.ecr.us-east-2.amazonaws.com/bookstore-frontend:latest"
 }
 
 
