@@ -38,6 +38,12 @@ variable "account_id" {
   default = "430006376054"
 }
 
+variable "ecr_image" {
+  type    = string
+  default = "075bfd35905624b65751fcaf01de6646f5ba9f83:latest"
+}
+
+
 
 ####################
 # VPC
@@ -170,6 +176,83 @@ resource "aws_eks_node_group" "this" {
 }
 
 ####################
+# Kubernetes Provider
+####################
+provider "kubernetes" {
+  host                   = aws_eks_cluster.this.endpoint
+  cluster_ca_certificate = base64decode(aws_eks_cluster.this.certificate_authority[0].data)
+  token                  = data.aws_eks_cluster_auth.this.token
+}
+
+data "aws_eks_cluster_auth" "this" {
+  name = aws_eks_cluster.this.name
+}
+
+####################
+# Kubernetes Deployment for ECR image
+####################
+resource "kubernetes_deployment" "bookstore_app" {
+  metadata {
+    name = "bookstore-app"
+    labels = {
+      app = "bookstore"
+    }
+  }
+
+  spec {
+    replicas = 2
+
+    selector {
+      match_labels = {
+        app = "bookstore"
+      }
+    }
+
+    template {
+      metadata {
+        labels = {
+          app = "bookstore"
+        }
+      }
+
+      spec {
+        container {
+          name  = "bookstore"
+          image = var.ecr_image
+
+          port {
+            container_port = 8080
+          }
+        }
+      }
+    }
+  }
+}
+####################
+# Kubernetes Service (LoadBalancer)
+####################
+resource "kubernetes_service" "bookstore_service" {
+  metadata {
+    name = "bookstore-service"
+  }
+
+  spec {
+    selector = {
+      app = "bookstore"
+    }
+
+    type = "LoadBalancer"
+
+    port {
+      port        = 80
+      target_port = 8080
+    }
+  }
+}
+
+
+
+####################
 # Outputs
 ####################
 output "cluster_name" {
@@ -178,4 +261,8 @@ output "cluster_name" {
 
 output "cluster_endpoint" {
   value = aws_eks_cluster.this.endpoint
+}
+
+output "frontend_url" {
+  value = kubernetes_service.bookstore_service.status[0].load_balancer[0].ingress[0].hostname
 }
