@@ -1,58 +1,49 @@
-provider "kubernetes" {
-  host                   = aws_eks_cluster.this.endpoint
-  cluster_ca_certificate = base64decode(aws_eks_cluster.this.certificate_authority[0].data)
-  token                  = data.aws_eks_cluster_auth.this.token
-}
+#############################
+# Monitoring - Prometheus & Alertmanager
+# No provider blocks here!
+#############################
 
-data "aws_eks_cluster_auth" "this" {
-  name = aws_eks_cluster.this.name
-}
-
-resource "kubernetes_namespace" "monitoring" {
-  metadata {
-    name = "monitoring"
-  }
-}
-
-
-#######################
-# ConfigMaps for Prometheus & Alertmanager
-#######################
+# --------------------------
+# Prometheus ConfigMap
+# --------------------------
 resource "kubernetes_config_map" "prometheus_config" {
   metadata {
     name      = "prometheus-config"
-    namespace = kubernetes_namespace.monitoring.metadata[0].name
+    namespace = "default"
   }
 
   data = {
-    "prometheus.yml"  = file("../monitoring/prometheus.yml")
-    "alert_rules.yml" = file("../monitoring/alert_rules.yml")
+    "prometheus.yml"  = file("${path.module}/../monitoring/prometheus.yml")
+    "alert_rules.yml" = file("${path.module}/../monitoring/alert_rules.yml")
   }
 }
 
+# --------------------------
+# Alertmanager ConfigMap
+# --------------------------
 resource "kubernetes_config_map" "alertmanager_config" {
   metadata {
     name      = "alertmanager-config"
-    namespace = kubernetes_namespace.monitoring.metadata[0].name
+    namespace = "default"
   }
 
   data = {
-    "alertmanager.yml" = file("../monitoring/alertmanager.yml")
+    "alertmanager.yml" = file("${path.module}/../monitoring/alertmanager.yml")
   }
 }
 
-
-#######################
+# --------------------------
 # Prometheus Deployment
-#######################
+# --------------------------
 resource "kubernetes_deployment_v1" "prometheus" {
   metadata {
     name      = "prometheus"
-    namespace = kubernetes_namespace.monitoring.metadata[0].name
+    namespace = "default"
   }
 
   spec {
     replicas = 1
+
     selector {
       match_labels = { app = "prometheus" }
     }
@@ -66,10 +57,6 @@ resource "kubernetes_deployment_v1" "prometheus" {
         container {
           name  = "prometheus"
           image = "prom/prometheus:latest"
-
-          args = [
-            "--config.file=/etc/prometheus/prometheus.yml"
-          ]
 
           port {
             container_port = 9090
@@ -93,19 +80,18 @@ resource "kubernetes_deployment_v1" "prometheus" {
   }
 }
 
-
-#######################
+# --------------------------
 # Prometheus Service
-#######################
+# --------------------------
 resource "kubernetes_service_v1" "prometheus" {
   metadata {
     name      = "prometheus-service"
-    namespace = kubernetes_namespace.monitoring.metadata[0].name
+    namespace = "default"
   }
 
   spec {
+    type = "LoadBalancer"
     selector = { app = "prometheus" }
-    type     = "LoadBalancer"
 
     port {
       port        = 9090
@@ -114,18 +100,18 @@ resource "kubernetes_service_v1" "prometheus" {
   }
 }
 
-
-#######################
+# --------------------------
 # Alertmanager Deployment
-#######################
+# --------------------------
 resource "kubernetes_deployment_v1" "alertmanager" {
   metadata {
     name      = "alertmanager"
-    namespace = kubernetes_namespace.monitoring.metadata[0].name
+    namespace = "default"
   }
 
   spec {
     replicas = 1
+
     selector {
       match_labels = { app = "alertmanager" }
     }
@@ -139,10 +125,6 @@ resource "kubernetes_deployment_v1" "alertmanager" {
         container {
           name  = "alertmanager"
           image = "prom/alertmanager:latest"
-
-          args = [
-            "--config.file=/etc/alertmanager/alertmanager.yml"
-          ]
 
           port {
             container_port = 9093
@@ -166,18 +148,18 @@ resource "kubernetes_deployment_v1" "alertmanager" {
   }
 }
 
-#######################
+# --------------------------
 # Alertmanager Service
-#######################
+# --------------------------
 resource "kubernetes_service_v1" "alertmanager" {
   metadata {
     name      = "alertmanager-service"
-    namespace = kubernetes_namespace.monitoring.metadata[0].name
+    namespace = "default"
   }
 
   spec {
-    selector = { app = "alertmanager" }
     type     = "LoadBalancer"
+    selector = { app = "alertmanager" }
 
     port {
       port        = 9093
@@ -185,4 +167,3 @@ resource "kubernetes_service_v1" "alertmanager" {
     }
   }
 }
-
