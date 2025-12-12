@@ -1,15 +1,19 @@
 #############################
-# Monitoring - Prometheus & Alertmanager
-# No provider blocks here!
+# Monitoring Namespace
 #############################
+resource "kubernetes_namespace" "monitoring" {
+  metadata {
+    name = "monitoring"
+  }
+}
 
-# --------------------------
+#############################
 # Prometheus ConfigMap
-# --------------------------
+#############################
 resource "kubernetes_config_map" "prometheus_config" {
   metadata {
     name      = "prometheus-config"
-    namespace = "default"
+    namespace = kubernetes_namespace.monitoring.metadata[0].name
   }
 
   data = {
@@ -18,13 +22,13 @@ resource "kubernetes_config_map" "prometheus_config" {
   }
 }
 
-# --------------------------
+#############################
 # Alertmanager ConfigMap
-# --------------------------
+#############################
 resource "kubernetes_config_map" "alertmanager_config" {
   metadata {
     name      = "alertmanager-config"
-    namespace = "default"
+    namespace = kubernetes_namespace.monitoring.metadata[0].name
   }
 
   data = {
@@ -32,13 +36,13 @@ resource "kubernetes_config_map" "alertmanager_config" {
   }
 }
 
-# --------------------------
+#############################
 # Prometheus Deployment
-# --------------------------
+#############################
 resource "kubernetes_deployment_v1" "prometheus" {
   metadata {
     name      = "prometheus"
-    namespace = "default"
+    namespace = kubernetes_namespace.monitoring.metadata[0].name
   }
 
   spec {
@@ -80,17 +84,17 @@ resource "kubernetes_deployment_v1" "prometheus" {
   }
 }
 
-# --------------------------
+#############################
 # Prometheus Service
-# --------------------------
+#############################
 resource "kubernetes_service_v1" "prometheus" {
   metadata {
     name      = "prometheus-service"
-    namespace = "default"
+    namespace = kubernetes_namespace.monitoring.metadata[0].name
   }
 
   spec {
-    type = "LoadBalancer"
+    type     = "LoadBalancer"
     selector = { app = "prometheus" }
 
     port {
@@ -100,13 +104,13 @@ resource "kubernetes_service_v1" "prometheus" {
   }
 }
 
-# --------------------------
+#############################
 # Alertmanager Deployment
-# --------------------------
+#############################
 resource "kubernetes_deployment_v1" "alertmanager" {
   metadata {
     name      = "alertmanager"
-    namespace = "default"
+    namespace = kubernetes_namespace.monitoring.metadata[0].name
   }
 
   spec {
@@ -148,13 +152,13 @@ resource "kubernetes_deployment_v1" "alertmanager" {
   }
 }
 
-# --------------------------
+#############################
 # Alertmanager Service
-# --------------------------
+#############################
 resource "kubernetes_service_v1" "alertmanager" {
   metadata {
     name      = "alertmanager-service"
-    namespace = "default"
+    namespace = kubernetes_namespace.monitoring.metadata[0].name
   }
 
   spec {
