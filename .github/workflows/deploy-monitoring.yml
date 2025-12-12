@@ -1,11 +1,11 @@
 name: Deploy Monitoring
 
 on:
-#  workflow_dispatch:
+  workflow_dispatch:
 #  push:
 #    branches:
 #      - main
-      - monitoring
+#      - monitoring
 
 env:
   AWS_REGION: us-east-2
