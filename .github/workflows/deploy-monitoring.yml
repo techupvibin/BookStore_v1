@@ -48,14 +48,14 @@ jobs:
       # Terraform Plan
       - name: Terraform Plan (Monitoring Only)
         run: |
-          -terraform -chdir=${TF_DIR} plan \
-          -target=kubernetes_namespace.monitoring \
-          -target=kubernetes_config_map.prometheus_config \
-          -target=kubernetes_config_map.alertmanager_config \
-          -target=kubernetes_deployment_v1.prometheus \
-          -target=kubernetes_service_v1.prometheus \
-          -target=kubernetes_deployment_v1.alertmanager \
-          -target=kubernetes_service_v1.alertmanager
+          terraform -chdir=${TF_DIR} plan \
+            -target=kubernetes_namespace.monitoring \
+            -target=kubernetes_config_map.prometheus_config \
+            -target=kubernetes_config_map.alertmanager_config \
+            -target=kubernetes_deployment_v1.prometheus \
+            -target=kubernetes_service_v1.prometheus \
+            -target=kubernetes_deployment_v1.alertmanager \
+            -target=kubernetes_service_v1.alertmanager
 
 
       # Terraform Apply
@@ -69,4 +69,5 @@ jobs:
             -target=kubernetes_service_v1.prometheus \
             -target=kubernetes_deployment_v1.alertmanager \
             -target=kubernetes_service_v1.alertmanager
+
 
