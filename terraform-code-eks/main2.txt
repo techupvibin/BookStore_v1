@@ -17,7 +17,9 @@ provider "aws" {
   region = "us-east-2"
 }
 
-#################### Variables ####################
+####################
+# Variables
+####################
 variable "cluster_name" {
   type    = string
   default = "bookstore-eks"
@@ -33,6 +35,11 @@ variable "node_instance_type" {
   default = "t3.medium"
 }
 
+variable "account_id" {
+  type    = string
+  default = "430006376054"
+}
+
 variable "frontend_image" {
   type    = string
   default = "430006376054.dkr.ecr.us-east-2.amazonaws.com/bookstore-frontend:latest"
@@ -43,7 +50,9 @@ variable "backend_image" {
   default = "430006376054.dkr.ecr.us-east-2.amazonaws.com/bookstore-backend:latest"
 }
 
-#################### VPC & Networking ####################
+####################
+# VPC & Networking
+####################
 data "aws_availability_zones" "available" {}
 
 resource "aws_vpc" "main" {
@@ -78,7 +87,10 @@ resource "aws_route_table_association" "public_assoc" {
   route_table_id = aws_route_table.public.id
 }
 
-#################### Security Groups ####################
+####################
+# Security Groups
+####################
+# ELB SG
 resource "aws_security_group" "eks_elb_sg" {
   name        = "${var.cluster_name}-elb-sg"
   description = "Allow HTTP from Internet"
@@ -98,14 +110,17 @@ resource "aws_security_group" "eks_elb_sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
   tags = { Name = "${var.cluster_name}-elb-sg" }
 }
 
+# Node SG
 resource "aws_security_group" "eks_nodes_sg" {
   name        = "${var.cluster_name}-nodes-sg"
   description = "Allow traffic from ELB"
   vpc_id      = aws_vpc.main.id
 
+  # Allow traffic from ELB SG
   ingress {
     from_port       = 80
     to_port         = 80
@@ -113,6 +128,7 @@ resource "aws_security_group" "eks_nodes_sg" {
     security_groups = [aws_security_group.eks_elb_sg.id]
   }
 
+  # Allow all traffic within SG (for node communication)
   ingress {
     from_port = 0
     to_port   = 0
@@ -126,10 +142,14 @@ resource "aws_security_group" "eks_nodes_sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
   tags = { Name = "${var.cluster_name}-nodes-sg" }
 }
 
-#################### IAM Roles ####################
+####################
+# IAM Roles
+####################
+# Cluster Role
 data "aws_iam_policy_document" "eks_cluster_assume" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -150,6 +170,7 @@ resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
 }
 
+# Node Role
 data "aws_iam_policy_document" "node_assume" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -180,7 +201,9 @@ resource "aws_iam_role_policy_attachment" "node_cni" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
 }
 
-#################### EKS Cluster ####################
+####################
+# EKS Cluster
+####################
 resource "aws_eks_cluster" "this" {
   name     = var.cluster_name
   role_arn = aws_iam_role.eks_cluster.arn
@@ -215,7 +238,9 @@ resource "aws_eks_node_group" "this" {
   ]
 }
 
-#################### Kubernetes Provider ####################
+####################
+# Kubernetes Provider
+####################
 data "aws_eks_cluster_auth" "this" {
   name = aws_eks_cluster.this.name
 }
@@ -226,23 +251,47 @@ provider "kubernetes" {
   token                  = data.aws_eks_cluster_auth.this.token
 }
 
-#################### Kubernetes Deployments ####################
-# Postgres
 resource "kubernetes_deployment_v1" "postgres" {
-  metadata { name = "postgres-db" }
+  metadata {
+    name = "postgres-db"
+    labels = { app = "postgres-db" }
+  }
+
   spec {
     replicas = 1
-    selector { match_labels = { app = "postgres-db" } }
+
+    selector {
+      match_labels = { app = "postgres-db" }
+    }
+
     template {
-      metadata { labels = { app = "postgres-db" } }
+      metadata {
+        labels = { app = "postgres-db" }
+      }
+
       spec {
         container {
           name  = "postgres"
           image = "postgres:14"
-          port { container_port = 5432 }
-          env { name = "POSTGRES_DB" value = "BookStore" }
-          env { name = "POSTGRES_USER" value = "postgres" }
-          env { name = "POSTGRES_PASSWORD" value = "Wrong123" }
+
+          port {
+            container_port = 5432
+          }
+
+          env {
+            name  = "POSTGRES_DB"
+            value = "bookstore"
+          }
+
+          env {
+            name  = "POSTGRES_USER"
+            value = "postgres"
+          }
+
+          env {
+            name  = "POSTGRES_PASSWORD"
+            value = "postgres"
+          }
         }
       }
     }
@@ -250,161 +299,114 @@ resource "kubernetes_deployment_v1" "postgres" {
 }
 
 resource "kubernetes_service_v1" "postgres" {
-  metadata { name = "postgres-db" }
+  metadata {
+    name = "postgres-db"
+  }
+
   spec {
     selector = { app = "postgres-db" }
-    port { port = 5432 target_port = 5432 }
-    type = "ClusterIP"
-  }
-}
 
-# Redis
-resource "kubernetes_deployment_v1" "redis" {
-  metadata { name = "redis-cache" }
-  spec {
-    replicas = 1
-    selector { match_labels = { app = "redis-cache" } }
-    template {
-      metadata { labels = { app = "redis-cache" } }
-      spec {
-        container { name = "redis" image = "redis:7" port { container_port = 6379 } }
-      }
+    port {
+      port        = 5432
+      target_port = 5432
     }
-  }
-}
 
-resource "kubernetes_service_v1" "redis" {
-  metadata { name = "redis-cache" }
-  spec {
-    selector = { app = "redis-cache" }
-    port { port = 6379 target_port = 6379 }
     type = "ClusterIP"
   }
 }
 
-# Zookeeper
-resource "kubernetes_deployment_v1" "zookeeper" {
-  metadata { name = "zookeeper" }
-  spec {
-    replicas = 1
-    selector { match_labels = { app = "zookeeper" } }
-    template {
-      metadata { labels = { app = "zookeeper" } }
-      spec {
-        container {
-          name  = "zookeeper"
-          image = "confluentinc/cp-zookeeper:7.4.0"
-          port { container_port = 2181 }
-          env { name = "ZOOKEEPER_CLIENT_PORT" value = "2181" }
-          env { name = "ZOOKEEPER_TICK_TIME" value = "2000" }
-        }
-      }
-    }
-  }
-}
 
-resource "kubernetes_service_v1" "zookeeper" {
-  metadata { name = "zookeeper" }
-  spec {
-    selector = { app = "zookeeper" }
-    port { port = 2181 target_port = 2181 }
-    type = "ClusterIP"
-  }
-}
 
-# Kafka
-resource "kubernetes_deployment_v1" "kafka" {
-  metadata { name = "kafka" }
-  spec {
-    replicas = 1
-    selector { match_labels = { app = "kafka" } }
-    template {
-      metadata { labels = { app = "kafka" } }
-      spec {
-        container {
-          name  = "kafka"
-          image = "confluentinc/cp-kafka:7.4.0"
-          port { container_port = 9092 }
-          env {
-            name  = "KAFKA_BROKER_ID"
-            value = "1"
-          }
-          env {
-            name  = "KAFKA_ZOOKEEPER_CONNECT"
-            value = "zookeeper:2181"
-          }
-          env {
-            name  = "KAFKA_ADVERTISED_LISTENERS"
-            value = "PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092"
-          }
-        }
-      }
-    }
-  }
-}
 
-resource "kubernetes_service_v1" "kafka" {
-  metadata { name = "kafka" }
-  spec {
-    selector = { app = "kafka" }
-    port { port = 9092 target_port = 9092 }
-    type = "ClusterIP"
-  }
-}
+####################
+# Deploy BookStore App
+####################
+# Backend Deployment
 
-# Backend
+
 resource "kubernetes_deployment_v1" "backend" {
-  metadata { name = "bookstore-backend" }
+  metadata {
+    name   = "bookstore-backend"
+    labels = { app = "bookstore-backend" }
+  }
+
   spec {
     replicas = 2
-    selector { match_labels = { app = "bookstore-backend" } }
+
+    selector {
+      match_labels = { app = "bookstore-backend" }
+    }
+
     template {
-      metadata { labels = { app = "bookstore-backend" } }
+      metadata {
+        labels = { app = "bookstore-backend" }
+      }
+
       spec {
         container {
           name  = "backend"
           image = var.backend_image
-          port { container_port = 8080 }
-          env { name = "SPRING_DATASOURCE_URL" value = "jdbc:postgresql://postgres-db:5432/BookStore" }
-          env { name = "SPRING_DATASOURCE_USERNAME" value = "postgres" }
-          env { name = "SPRING_DATASOURCE_PASSWORD" value = "Wrong123" }
-          env { name = "SPRING_REDIS_HOST" value = "redis-cache" }
-          env { name = "SPRING_KAFKA_BOOTSTRAP_SERVERS" value = "kafka:29092" }
+          port {
+            container_port = 8080
+          }
         }
       }
     }
   }
 }
 
+# Backend Service (ClusterIP)
+
 resource "kubernetes_service_v1" "backend_service" {
   metadata { name = "bookstore-backend" }
+
   spec {
     selector = { app = "bookstore-backend" }
-    port { port = 8080 target_port = 8080 }
+    port {
+      port        = 8080
+      target_port = 8080
+    }
     type = "ClusterIP"
   }
 }
 
-# Frontend
+# Frontend Deployment
 resource "kubernetes_deployment_v1" "frontend" {
-  metadata { name = "bookstore-frontend" }
+  metadata {
+    name   = "bookstore-frontend"
+    labels = { app = "bookstore-frontend" }
+  }
+
   spec {
     replicas = 2
-    selector { match_labels = { app = "bookstore-frontend" } }
+
+    selector {
+      match_labels = { app = "bookstore-frontend" }
+    }
+
     template {
-      metadata { labels = { app = "bookstore-frontend" } }
+      metadata {
+        labels = { app = "bookstore-frontend" }
+      }
+
       spec {
         container {
           name  = "frontend"
           image = var.frontend_image
-          port { container_port = 80 }
-          env { name = "BACKEND_URL" value = "http://bookstore-backend.default.svc.cluster.local:8080" }
+          port {
+            container_port = 80
+          }
+          env {
+            name  = "BACKEND_URL"
+            value = "http://bookstore-backend.default.svc.cluster.local:8080"
+          }
         }
       }
     }
   }
 }
 
+# Frontend Service (LoadBalancer)
 resource "kubernetes_service_v1" "frontend_service" {
   metadata {
     name = "bookstore-frontend"
@@ -412,14 +414,24 @@ resource "kubernetes_service_v1" "frontend_service" {
       "service.beta.kubernetes.io/aws-load-balancer-security-groups" = aws_security_group.eks_elb_sg.id
     }
   }
+
   spec {
     selector = { app = "bookstore-frontend" }
-    port { port = 80 target_port = 80 }
+    port {
+      port        = 80
+      target_port = 80
+    }
     type = "LoadBalancer"
   }
 }
 
-#################### Outputs ####################
+
+
+
+
+####################
+# Outputs
+####################
 output "frontend_url" {
   value = kubernetes_service_v1.frontend_service.status[0].load_balancer[0].ingress[0].hostname
 }
