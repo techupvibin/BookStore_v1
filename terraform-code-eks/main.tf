@@ -1,69 +1,22 @@
-terraform {
-  required_version = ">= 1.5.0"
-  backend "s3" {
-    bucket  = "bookstore-eks-terraform-state-vibin"
-    key     = "terraform.tfstate"
-    region  = "us-east-2"
-    encrypt = true
-  }
-
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "~> 2.27"
-    }
-    helm = {
-      source  = "hashicorp/helm"
-      version = "~> 2.8"
-    }
-  }
-}
-
-provider "aws" {
-  region = "us-east-2"
-}
-
-provider "kubernetes" {
-  host                   = module.eks.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks.cluster_ca)
-  token                  = data.aws_eks_cluster_auth.this.token
-}
-
-provider "helm" {
-  kubernetes {
-    host                   = module.eks.cluster_endpoint
-    cluster_ca_certificate = base64decode(module.eks.cluster_ca)
-    token                  = data.aws_eks_cluster_auth.this.token
-  }
-}
-
-
-variable "frontend_image" {
-  type = string
-}
-
-variable "backend_image" {
-  type = string
-}
-
-
-
-
+############################
+# Data Sources
+############################
 data "aws_availability_zones" "available" {}
 
+############################
 # VPC Module
+############################
 module "vpc" {
   source = "./modules/vpc"
 
-  cidr = "10.0.0.0/16"
-  azs  = slice(data.aws_availability_zones.available.names, 0, 2)
+  cluster_name = var.cluster_name
+  cidr         = "10.0.0.0/16"
+  azs          = slice(data.aws_availability_zones.available.names, 0, 2)
 }
 
+############################
 # ECR Module
+############################
 module "ecr" {
   source = "./modules/ecr"
 
@@ -71,9 +24,11 @@ module "ecr" {
   backend_repo  = "bookstore-backend"
 }
 
-# IAM Roles for EKS
+############################
+# IAM Roles
+############################
 resource "aws_iam_role" "eks_cluster_role" {
-  name = "bookstore-eks-cluster-role"
+  name = "${var.cluster_name}-cluster-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -91,7 +46,7 @@ resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
 }
 
 resource "aws_iam_role" "node_role" {
-  name = "bookstore-eks-node-role"
+  name = "${var.cluster_name}-node-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -114,24 +69,30 @@ resource "aws_iam_role_policy_attachment" "node_policies" {
   policy_arn = each.value
 }
 
-# EKS Cluster
+############################
+# EKS Cluster Module
+############################
 module "eks" {
   source = "./modules/eks"
 
-  cluster_name        = "bookstore-eks"
+  cluster_name        = var.cluster_name
   subnet_ids          = module.vpc.public_subnet_ids
   cluster_role_arn    = aws_iam_role.eks_cluster_role.arn
   node_group_role_arn = aws_iam_role.node_role.arn
-  desired_nodes       = 2
-  instance_type       = "t3.medium"
+  desired_nodes       = var.desired_nodes
+  instance_type       = var.node_instance_type
 }
 
+############################
 # EKS Auth
+############################
 data "aws_eks_cluster_auth" "this" {
   name = module.eks.cluster_name
 }
 
+############################
 # Kubernetes App Setup
+############################
 module "k8s_setup" {
   source = "./modules/k8s-setup"
 
@@ -139,11 +100,13 @@ module "k8s_setup" {
   cluster_ca       = module.eks.cluster_ca
   token            = data.aws_eks_cluster_auth.this.token
 
-  frontend_image = "430006376054.dkr.ecr.us-east-2.amazonaws.com/bookstore-frontend:latest"
-  backend_image  = "430006376054.dkr.ecr.us-east-2.amazonaws.com/bookstore-backend:latest"
+  frontend_image = var.frontend_image
+  backend_image  = var.backend_image
 }
 
-# Ingress NGINX
+############################
+# Ingress NGINX (Helm)
+############################
 module "ingress_nginx" {
   source = "./modules/ingress-nginx"
 
@@ -152,7 +115,9 @@ module "ingress_nginx" {
   token            = data.aws_eks_cluster_auth.this.token
 }
 
-# Monitoring
+############################
+# Monitoring Module (Prometheus/Grafana)
+############################
 module "monitoring" {
   source = "./modules/monitoring"
 
@@ -161,9 +126,11 @@ module "monitoring" {
   token            = data.aws_eks_cluster_auth.this.token
 }
 
+############################
 # Outputs
+############################
 output "cluster_name" {
-  value = module.eks.cluster_name
+  value = var.cluster_name
 }
 
 output "frontend_ecr" {
@@ -172,4 +139,8 @@ output "frontend_ecr" {
 
 output "backend_ecr" {
   value = module.ecr.backend_repo_url
+}
+
+output "cluster_endpoint" {
+  value = module.eks.cluster_endpoint
 }
