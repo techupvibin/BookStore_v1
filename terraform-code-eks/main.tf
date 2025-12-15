@@ -9,9 +9,8 @@ data "aws_availability_zones" "available" {}
 module "vpc" {
   source = "./modules/vpc"
 
-  cluster_name = var.cluster_name
-  cidr         = "10.0.0.0/16"
-  azs          = slice(data.aws_availability_zones.available.names, 0, 2)
+  cidr = "10.0.0.0/16"
+  azs  = slice(data.aws_availability_zones.available.names, 0, 2)
 }
 
 ############################
@@ -70,13 +69,13 @@ resource "aws_iam_role_policy_attachment" "node_policies" {
 }
 
 ############################
-# EKS Cluster Module
+# EKS Cluster
 ############################
 module "eks" {
   source = "./modules/eks"
 
   cluster_name        = var.cluster_name
-  subnet_ids          = module.vpc.public_subnet_ids
+  subnet_ids          = module.vpc.public_subnets
   cluster_role_arn    = aws_iam_role.eks_cluster_role.arn
   node_group_role_arn = aws_iam_role.node_role.arn
   desired_nodes       = var.desired_nodes
@@ -96,41 +95,45 @@ data "aws_eks_cluster_auth" "this" {
 module "k8s_setup" {
   source = "./modules/k8s-setup"
 
-  cluster_endpoint = module.eks.cluster_endpoint
-  cluster_ca       = module.eks.cluster_ca
-  token            = data.aws_eks_cluster_auth.this.token
+  k8s_cluster_endpoint = module.eks.cluster_endpoint
+  k8s_cluster_ca       = module.eks.cluster_ca
+  k8s_auth_token       = data.aws_eks_cluster_auth.this.token
 
-  frontend_image = var.frontend_image
-  backend_image  = var.backend_image
+  frontend_image_url = var.frontend_image
+  backend_image_url  = var.backend_image
 }
 
 ############################
-# Ingress NGINX (Helm)
+# Ingress NGINX
 ############################
 module "ingress_nginx" {
   source = "./modules/ingress-nginx"
 
-  cluster_endpoint = module.eks.cluster_endpoint
-  cluster_ca       = module.eks.cluster_ca
-  token            = data.aws_eks_cluster_auth.this.token
+  k8s_cluster_endpoint = module.eks.cluster_endpoint
+  k8s_cluster_ca       = module.eks.cluster_ca
+  k8s_auth_token       = data.aws_eks_cluster_auth.this.token
 }
 
 ############################
-# Monitoring Module (Prometheus/Grafana)
+# Monitoring
 ############################
 module "monitoring" {
   source = "./modules/monitoring"
 
-  cluster_endpoint = module.eks.cluster_endpoint
-  cluster_ca       = module.eks.cluster_ca
-  token            = data.aws_eks_cluster_auth.this.token
+  k8s_cluster_endpoint = module.eks.cluster_endpoint
+  k8s_cluster_ca       = module.eks.cluster_ca
+  k8s_auth_token       = data.aws_eks_cluster_auth.this.token
 }
 
 ############################
 # Outputs
 ############################
 output "cluster_name" {
-  value = var.cluster_name
+  value = module.eks.cluster_name
+}
+
+output "cluster_endpoint" {
+  value = module.eks.cluster_endpoint
 }
 
 output "frontend_ecr" {
@@ -139,8 +142,4 @@ output "frontend_ecr" {
 
 output "backend_ecr" {
   value = module.ecr.backend_repo_url
-}
-
-output "cluster_endpoint" {
-  value = module.eks.cluster_endpoint
 }
