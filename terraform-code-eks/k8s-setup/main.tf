@@ -178,40 +178,63 @@ resource "kubernetes_service_v1" "kafka" {
 
 #################### Backend ####################
 resource "kubernetes_deployment_v1" "backend" {
-  metadata { name = "bookstore-backend" }
+  metadata {
+    name = "bookstore-backend"
+  }
 
   spec {
     replicas = 2
-    selector { match_labels = { app = "bookstore-backend" } }
+
+    selector {
+      match_labels = {
+        app = "bookstore-backend"
+      }
+    }
 
     template {
-      metadata { labels = { app = "bookstore-backend" } }
+      metadata {
+        labels = {
+          app = "bookstore-backend"
+        }
+      }
 
       spec {
         container {
           name  = "backend"
-          image = var.backend_image
-          port { container_port = 8080 }
+          image = "430006376054.dkr.ecr.us-east-2.amazonaws.com/bookstore-backend:latest"
+
+          port {
+            container_port = 8080
+          }
+
+          env {
+            name  = "SPRING_PROFILES_ACTIVE"
+            value = "docker"
+          }
 
           env {
             name  = "SPRING_DATASOURCE_URL"
-            value = "jdbc:postgresql://postgres-db:5432/BookStore"
+            value = "jdbc:postgresql://postgres:5432/BookStore"
           }
+
           env {
             name  = "SPRING_DATASOURCE_USERNAME"
             value = "postgres"
           }
+
           env {
             name  = "SPRING_DATASOURCE_PASSWORD"
             value = "Wrong123"
           }
+
           env {
-            name  = "SPRING_REDIS_HOST"
-            value = "redis-cache"
+            name  = "REDIS_HOST"
+            value = "redis"
           }
+
           env {
-            name  = "SPRING_KAFKA_BOOTSTRAP_SERVERS"
-            value = "kafka:29092"
+            name  = "KAFKA_BOOTSTRAP_SERVERS"
+            value = "kafka:9092"
           }
         }
       }
@@ -219,57 +242,79 @@ resource "kubernetes_deployment_v1" "backend" {
   }
 }
 
-resource "kubernetes_service_v1" "backend_service" {
-  metadata { name = "bookstore-backend" }
+
+resource "kubernetes_service_v1" "backend" {
+  metadata {
+    name = "bookstore-backend"
+  }
 
   spec {
-    selector = { app = "bookstore-backend" }
+    selector = {
+      app = "bookstore-backend"
+    }
+
     port {
       port        = 8080
       target_port = 8080
     }
+
     type = "ClusterIP"
   }
 }
 
+
 #################### Frontend ####################
 resource "kubernetes_deployment_v1" "frontend" {
-  metadata { name = "bookstore-frontend" }
-
-  spec {
-    replicas = 2
-    selector { match_labels = { app = "bookstore-frontend" } }
-
-    template {
-      metadata { labels = { app = "bookstore-frontend" } }
-
-      spec {
-        container {
-          name  = "frontend"
-          image = var.frontend_image
-          port { container_port = 80 }
-
-          env {
-            name  = "BACKEND_URL"
-            value = "http://bookstore-backend.default.svc.cluster.local:8080"
-          }
-        }
-      }
-    }
-  }
-}
-
-resource "kubernetes_service_v1" "frontend_service" {
   metadata {
     name = "bookstore-frontend"
   }
 
   spec {
-    selector = { app = "bookstore-frontend" }
+    replicas = 2
+
+    selector {
+      match_labels = {
+        app = "bookstore-frontend"
+      }
+    }
+
+    template {
+      metadata {
+        labels = {
+          app = "bookstore-frontend"
+        }
+      }
+
+      spec {
+        container {
+          name  = "frontend"
+          image = "430006376054.dkr.ecr.us-east-2.amazonaws.com/bookstore-frontend:latest"
+
+          port {
+            container_port = 80
+          }
+        }
+      }
+    }
+  }
+}
+
+
+resource "kubernetes_service_v1" "frontend" {
+  metadata {
+    name = "bookstore-frontend"
+  }
+
+  spec {
+    selector = {
+      app = "bookstore-frontend"
+    }
+
     port {
       port        = 80
       target_port = 80
     }
+
     type = "LoadBalancer"
   }
 }
