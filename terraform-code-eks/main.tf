@@ -1,3 +1,7 @@
+#####################################################
+# Root Terraform Configuration for Bookstore EKS
+#####################################################
+
 terraform {
   required_version = ">= 1.5.0"
 
@@ -12,68 +16,68 @@ terraform {
     }
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 2.8"
+      version = "~> 2.10"
     }
+  }
+
+  backend "s3" {
+    bucket = "bookstore-eks-terraform-state-vibin"
+    key    = "terraform.tfstate"
+    region = "us-east-2"
+    encrypt = true
   }
 }
 
+#####################################################
+# Providers
+#####################################################
 provider "aws" {
-  region = var.aws_region
+  region = "us-east-2"
 }
 
-############################
+data "aws_availability_zones" "available" {}
+
+#####################################################
 # Variables
-############################
-variable "aws_region" {
-  default = "us-east-2"
-}
-
+#####################################################
 variable "cluster_name" {
+  type    = string
   default = "bookstore-eks"
 }
 
-variable "node_instance_type" {
-  default = "t3.medium"
-}
-
 variable "desired_nodes" {
+  type    = number
   default = 2
 }
 
+variable "node_instance_type" {
+  type    = string
+  default = "t3.medium"
+}
+
 variable "frontend_image" {
+  type    = string
   default = "430006376054.dkr.ecr.us-east-2.amazonaws.com/bookstore-frontend:latest"
 }
 
 variable "backend_image" {
+  type    = string
   default = "430006376054.dkr.ecr.us-east-2.amazonaws.com/bookstore-backend:latest"
 }
 
-############################
-# Availability Zones
-############################
-data "aws_availability_zones" "available" {}
+#####################################################
+# Modules
+#####################################################
 
-############################
 # VPC Module
-############################
-data "aws_availability_zones" "available" {}
-
 module "vpc" {
   source = "./vpc"
 
-  name = var.cluster_name
   cidr = "10.0.0.0/16"
   azs  = slice(data.aws_availability_zones.available.names, 0, 2)
 }
 
-output "public_subnets" {
-  value = module.vpc.public_subnet_ids
-}
-
-
-############################
 # ECR Module
-############################
 module "ecr" {
   source = "./ecr"
 
@@ -81,9 +85,10 @@ module "ecr" {
   backend_repo  = "bookstore-backend"
 }
 
-############################
+#####################################################
 # IAM Roles
-############################
+#####################################################
+# EKS Cluster Role
 resource "aws_iam_role" "eks_cluster_role" {
   name = "${var.cluster_name}-cluster-role"
 
@@ -102,6 +107,7 @@ resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
 }
 
+# Node Group Role
 resource "aws_iam_role" "node_role" {
   name = "${var.cluster_name}-node-role"
 
@@ -126,9 +132,9 @@ resource "aws_iam_role_policy_attachment" "node_policies" {
   policy_arn = each.value
 }
 
-############################
-# EKS Module
-############################
+#####################################################
+# EKS Cluster Module
+#####################################################
 module "eks" {
   source = "./eks"
 
@@ -140,16 +146,16 @@ module "eks" {
   instance_type       = var.node_instance_type
 }
 
-############################
-# EKS Auth Token
-############################
+#####################################################
+# EKS Auth
+#####################################################
 data "aws_eks_cluster_auth" "this" {
   name = module.eks.cluster_name
 }
 
-############################
-# Kubernetes Setup Module
-############################
+#####################################################
+# Kubernetes App Setup
+#####################################################
 module "k8s_setup" {
   source = "./k8s-setup"
 
@@ -161,9 +167,9 @@ module "k8s_setup" {
   backend_image  = var.backend_image
 }
 
-############################
-# Ingress NGINX (Helm)
-############################
+#####################################################
+# Ingress NGINX Module (Helm)
+#####################################################
 module "ingress_nginx" {
   source = "./ingress-nginx"
 
@@ -172,9 +178,9 @@ module "ingress_nginx" {
   token            = data.aws_eks_cluster_auth.this.token
 }
 
-############################
-# Monitoring Module
-############################
+#####################################################
+# Monitoring Module (Prometheus/Grafana)
+#####################################################
 module "monitoring" {
   source = "./monitoring"
 
@@ -183,9 +189,9 @@ module "monitoring" {
   token            = data.aws_eks_cluster_auth.this.token
 }
 
-############################
-# Kubernetes Provider
-############################
+#####################################################
+# Providers for Kubernetes & Helm
+#####################################################
 provider "kubernetes" {
   host                   = module.eks.cluster_endpoint
   cluster_ca_certificate = base64decode(module.eks.cluster_ca)
@@ -200,9 +206,9 @@ provider "helm" {
   }
 }
 
-############################
+#####################################################
 # Outputs
-############################
+#####################################################
 output "cluster_name" {
   value = var.cluster_name
 }
@@ -213,8 +219,4 @@ output "frontend_ecr" {
 
 output "backend_ecr" {
   value = module.ecr.backend_repo_url
-}
-
-output "eks_endpoint" {
-  value = module.eks.cluster_endpoint
 }

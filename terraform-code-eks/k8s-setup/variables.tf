@@ -1,24 +1,19 @@
-variable "backend_image" {
-  type        = string
-  description = "Backend Docker image URL"
-}
-
-variable "frontend_image" {
-  type        = string
-  description = "Frontend Docker image URL"
-}
-
 variable "cluster_endpoint" {
-  type        = string
-  description = "EKS cluster endpoint"
+  type = string
 }
 
 variable "cluster_ca" {
-  type        = string
-  description = "EKS cluster CA data"
+  type = string
 }
 
 variable "token" {
-  type        = string
-  description = "EKS auth token"
+  type = string
+}
+
+variable "frontend_image" {
+  type = string
+}
+
+variable "backend_image" {
+  type = string
 }
