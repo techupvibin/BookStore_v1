@@ -1,8 +1,63 @@
+terraform {
+  required_version = ">= 1.5.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.27"
+    }
+    helm = {
+      source  = "hashicorp/helm"
+      version = "~> 2.8"
+    }
+  }
+}
+
+provider "aws" {
+  region = var.aws_region
+}
+
+############################
+# Variables
+############################
+variable "aws_region" {
+  default = "us-east-2"
+}
+
+variable "cluster_name" {
+  default = "bookstore-eks"
+}
+
+variable "node_instance_type" {
+  default = "t3.medium"
+}
+
+variable "desired_nodes" {
+  default = 2
+}
+
+variable "frontend_image" {
+  default = "430006376054.dkr.ecr.us-east-2.amazonaws.com/bookstore-frontend:latest"
+}
+
+variable "backend_image" {
+  default = "430006376054.dkr.ecr.us-east-2.amazonaws.com/bookstore-backend:latest"
+}
+
+############################
+# Availability Zones
+############################
 data "aws_availability_zones" "available" {}
 
 ############################
-# VPC
+# VPC Module
 ############################
+data "aws_availability_zones" "available" {}
+
 module "vpc" {
   source = "./vpc"
 
@@ -11,8 +66,13 @@ module "vpc" {
   azs  = slice(data.aws_availability_zones.available.names, 0, 2)
 }
 
+output "public_subnets" {
+  value = module.vpc.public_subnet_ids
+}
+
+
 ############################
-# ECR
+# ECR Module
 ############################
 module "ecr" {
   source = "./ecr"
@@ -22,7 +82,7 @@ module "ecr" {
 }
 
 ############################
-# IAM
+# IAM Roles
 ############################
 resource "aws_iam_role" "eks_cluster_role" {
   name = "${var.cluster_name}-cluster-role"
@@ -67,7 +127,7 @@ resource "aws_iam_role_policy_attachment" "node_policies" {
 }
 
 ############################
-# EKS
+# EKS Module
 ############################
 module "eks" {
   source = "./eks"
@@ -81,14 +141,14 @@ module "eks" {
 }
 
 ############################
-# EKS Auth Token (ROOT ONLY)
+# EKS Auth Token
 ############################
 data "aws_eks_cluster_auth" "this" {
   name = module.eks.cluster_name
 }
 
 ############################
-# Kubernetes App Setup
+# Kubernetes Setup Module
 ############################
 module "k8s_setup" {
   source = "./k8s-setup"
@@ -113,7 +173,7 @@ module "ingress_nginx" {
 }
 
 ############################
-# Monitoring (Prometheus/Grafana)
+# Monitoring Module
 ############################
 module "monitoring" {
   source = "./monitoring"
@@ -121,6 +181,23 @@ module "monitoring" {
   cluster_endpoint = module.eks.cluster_endpoint
   cluster_ca       = module.eks.cluster_ca
   token            = data.aws_eks_cluster_auth.this.token
+}
+
+############################
+# Kubernetes Provider
+############################
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_ca)
+  token                  = data.aws_eks_cluster_auth.this.token
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = module.eks.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks.cluster_ca)
+    token                  = data.aws_eks_cluster_auth.this.token
+  }
 }
 
 ############################
@@ -136,4 +213,8 @@ output "frontend_ecr" {
 
 output "backend_ecr" {
   value = module.ecr.backend_repo_url
+}
+
+output "eks_endpoint" {
+  value = module.eks.cluster_endpoint
 }
