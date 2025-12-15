@@ -1,47 +1,92 @@
-name: Terraform EKS Deployment
+name: Terraform EKS CI/CD
 
 on:
-#  push:
-#    branches:
-#      - main
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 env:
   AWS_REGION: us-east-2
-  TF_DIR: terraform-code-eks
+  AWS_ACCOUNT_ID: 430006376054
+  TERRAFORM_DIR: terraform-code-eks
+  ECR_BACKEND: bookstore-backend
+  ECR_FRONTEND: bookstore-frontend
 
 jobs:
-  terraform:
-    name: Apply Terraform
+  build-and-deploy:
     runs-on: ubuntu-latest
 
-    permissions:
-      id-token: write
-      contents: read
-
     steps:
+    # ---------------------------
+    # Checkout
+    # ---------------------------
+    - name: Checkout source
+      uses: actions/checkout@v4
 
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    # ---------------------------
+    # AWS Credentials
+    # ---------------------------
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
 
-      - name: Configure AWS Credentials via Secrets
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+    # ---------------------------
+    # Login to ECR
+    # ---------------------------
+    - name: Login to Amazon ECR
+      uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+    # ---------------------------
+    # Build & Push Backend
+    # ---------------------------
+    - name: Build & Push Backend Image
+      run: |
+        docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_BACKEND:latest ./Backend
+        docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_BACKEND:latest
 
-      - name: Terraform Init
-        run: terraform -chdir=${{ env.TF_DIR }} init
+    # ---------------------------
+    # Build & Push Frontend
+    # ---------------------------
+    - name: Build & Push Frontend Image
+      run: |
+        docker build \
+          --build-arg REACT_APP_API_BASE_URL=http://bookstore-backend.default.svc.cluster.local:8080 \
+          -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_FRONTEND:latest \
+          ./Frontend
+        docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_FRONTEND:latest
 
-      - name: Terraform Validate
-        run: terraform -chdir=${{ env.TF_DIR }} validate
+    # ---------------------------
+    # Terraform Setup
+    # ---------------------------
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.6.6
 
-      - name: Terraform Plan
-        run: terraform -chdir=${{ env.TF_DIR }} plan -out=tfplan
+    # ---------------------------
+    # Terraform Init
+    # ---------------------------
+    - name: Terraform Init
+      run: terraform -chdir=${TERRAFORM_DIR} init
 
-      - name: Terraform Apply
-        run: terraform -chdir=${{ env.TF_DIR }} apply -auto-approve tfplan
+    # ---------------------------
+    # Terraform Validate
+    # ---------------------------
+    - name: Terraform Validate
+      run: terraform -chdir=${TERRAFORM_DIR} validate
+
+    # ---------------------------
+    # Terraform Plan
+    # ---------------------------
+    - name: Terraform Plan
+      run: terraform -chdir=${TERRAFORM_DIR} plan
+
+    # ---------------------------
+    # Terraform Apply
+    # ---------------------------
+    - name: Terraform Apply
+      run: terraform -chdir=${TERRAFORM_DIR} apply -auto-approve
