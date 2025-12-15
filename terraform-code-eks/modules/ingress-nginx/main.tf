@@ -5,3 +5,4 @@ module "ingress_nginx" {
   cluster_ca       = module.eks.cluster_ca
   token            = data.aws_eks_cluster_auth.this.token
 }
+
