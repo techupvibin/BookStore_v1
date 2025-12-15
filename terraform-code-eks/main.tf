@@ -109,9 +109,9 @@ module "k8s_setup" {
 module "ingress_nginx" {
   source = "./modules/ingress-nginx"
 
-  k8s_cluster_endpoint = module.eks.cluster_endpoint
-  k8s_cluster_ca       = module.eks.cluster_ca
-  k8s_auth_token       = data.aws_eks_cluster_auth.this.token
+  cluster_endpoint = module.eks.cluster_endpoint
+  cluster_ca       = module.eks.cluster_ca
+  token       = data.aws_eks_cluster_auth.this.token
 }
 
 ############################
