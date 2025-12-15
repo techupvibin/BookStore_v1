@@ -1,3 +1,11 @@
-variable "cluster_endpoint" {}
-variable "cluster_ca" {}
-variable "token" {}
+variable "cluster_endpoint" {
+  type = string
+}
+
+variable "cluster_ca" {
+  type = string
+}
+
+variable "token" {
+  type = string
+}
