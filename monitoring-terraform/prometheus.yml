@@ -1,0 +1,35 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Alert rules (you can keep your existing rules if needed)
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Blackbox Exporter monitoring frontend URL
+  - job_name: 'frontend'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]       # Using the http_2xx module from blackbox.yml
+    static_configs:
+      - targets:
+        - http://a9bbf94e35b6b4cd9b9667eafa18fe30-1609833887.us-east-2.elb.amazonaws.com/
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter.monitoring.svc.cluster.local:9115
