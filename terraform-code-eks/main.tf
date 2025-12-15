@@ -1,5 +1,8 @@
 data "aws_availability_zones" "available" {}
 
+############################
+# VPC
+############################
 module "vpc" {
   source = "./vpc"
 
@@ -8,21 +11,28 @@ module "vpc" {
   azs  = slice(data.aws_availability_zones.available.names, 0, 2)
 }
 
+############################
+# ECR
+############################
 module "ecr" {
   source = "./ecr"
 
   frontend_repo = "bookstore-frontend"
   backend_repo  = "bookstore-backend"
 }
+
+############################
+# IAM
+############################
 resource "aws_iam_role" "eks_cluster_role" {
   name = "${var.cluster_name}-cluster-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect = "Allow"
+      Effect    = "Allow"
       Principal = { Service = "eks.amazonaws.com" }
-      Action = "sts:AssumeRole"
+      Action    = "sts:AssumeRole"
     }]
   })
 }
@@ -38,9 +48,9 @@ resource "aws_iam_role" "node_role" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect = "Allow"
+      Effect    = "Allow"
       Principal = { Service = "ec2.amazonaws.com" }
-      Action = "sts:AssumeRole"
+      Action    = "sts:AssumeRole"
     }]
   })
 }
@@ -55,48 +65,67 @@ resource "aws_iam_role_policy_attachment" "node_policies" {
   role       = aws_iam_role.node_role.name
   policy_arn = each.value
 }
+
+############################
+# EKS
+############################
 module "eks" {
   source = "./eks"
 
-  cluster_name         = var.cluster_name
-  subnet_ids           = module.vpc.public_subnet_ids
-  cluster_role_arn     = aws_iam_role.eks_cluster_role.arn
-  node_group_role_arn  = aws_iam_role.node_role.arn
-  desired_nodes        = var.desired_nodes
-  instance_type        = var.node_instance_type
+  cluster_name        = var.cluster_name
+  subnet_ids          = module.vpc.public_subnet_ids
+  cluster_role_arn    = aws_iam_role.eks_cluster_role.arn
+  node_group_role_arn = aws_iam_role.node_role.arn
+  desired_nodes       = var.desired_nodes
+  instance_type       = var.node_instance_type
 }
-provider "kubernetes" {
-  host                   = module.eks.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks.cluster_ca)
-  token                  = module.eks.token
+
+############################
+# EKS Auth Token (ROOT ONLY)
+############################
+data "aws_eks_cluster_auth" "this" {
+  name = module.eks.cluster_name
 }
-provider "helm" {
-  kubernetes {
-    host                   = module.eks.cluster_endpoint
-    cluster_ca_certificate = base64decode(module.eks.cluster_ca)
-    token                  = module.eks.token
-  }
+
+############################
+# Kubernetes App Setup
+############################
+module "k8s_setup" {
+  source = "./k8s-setup"
+
+  cluster_endpoint = module.eks.cluster_endpoint
+  cluster_ca       = module.eks.cluster_ca
+  token            = data.aws_eks_cluster_auth.this.token
+
+  frontend_image = var.frontend_image
+  backend_image  = var.backend_image
 }
+
+############################
+# Ingress NGINX (Helm)
+############################
 module "ingress_nginx" {
   source = "./ingress-nginx"
 
   cluster_endpoint = module.eks.cluster_endpoint
   cluster_ca       = module.eks.cluster_ca
-  token            = module.eks.token
+  token            = data.aws_eks_cluster_auth.this.token
 }
+
+############################
+# Monitoring (Prometheus/Grafana)
+############################
 module "monitoring" {
   source = "./monitoring"
 
   cluster_endpoint = module.eks.cluster_endpoint
   cluster_ca       = module.eks.cluster_ca
-  token            = module.eks.token
+  token            = data.aws_eks_cluster_auth.this.token
 }
-module "k8s_setup" {
-  source = "./k8s-setup"
 
-  frontend_image = var.frontend_image
-  backend_image  = var.backend_image
-}
+############################
+# Outputs
+############################
 output "cluster_name" {
   value = var.cluster_name
 }
