@@ -251,10 +251,79 @@ provider "kubernetes" {
   token                  = data.aws_eks_cluster_auth.this.token
 }
 
+resource "kubernetes_deployment_v1" "postgres" {
+  metadata {
+    name = "postgres-db"
+    labels = { app = "postgres-db" }
+  }
+
+  spec {
+    replicas = 1
+
+    selector {
+      match_labels = { app = "postgres-db" }
+    }
+
+    template {
+      metadata {
+        labels = { app = "postgres-db" }
+      }
+
+      spec {
+        container {
+          name  = "postgres"
+          image = "postgres:14"
+
+          port {
+            container_port = 5432
+          }
+
+          env {
+            name  = "POSTGRES_DB"
+            value = "bookstore"
+          }
+
+          env {
+            name  = "POSTGRES_USER"
+            value = "postgres"
+          }
+
+          env {
+            name  = "POSTGRES_PASSWORD"
+            value = "postgres"
+          }
+        }
+      }
+    }
+  }
+}
+
+resource "kubernetes_service_v1" "postgres" {
+  metadata {
+    name = "postgres-db"
+  }
+
+  spec {
+    selector = { app = "postgres-db" }
+
+    port {
+      port        = 5432
+      target_port = 5432
+    }
+
+    type = "ClusterIP"
+  }
+}
+
+
+
+
 ####################
 # Deploy BookStore App
 ####################
 # Backend Deployment
+
+
 resource "kubernetes_deployment_v1" "backend" {
   metadata {
     name   = "bookstore-backend"
@@ -287,6 +356,7 @@ resource "kubernetes_deployment_v1" "backend" {
 }
 
 # Backend Service (ClusterIP)
+
 resource "kubernetes_service_v1" "backend_service" {
   metadata { name = "bookstore-backend" }
 
@@ -354,6 +424,10 @@ resource "kubernetes_service_v1" "frontend_service" {
     type = "LoadBalancer"
   }
 }
+
+
+
+
 
 ####################
 # Outputs
