@@ -1,5 +1,7 @@
-provider "kubernetes" {
-  host                   = var.cluster_endpoint
-  cluster_ca_certificate = base64decode(var.cluster_ca)
-  token                  = var.token
+output "frontend_deployment_name" {
+  value = kubernetes_deployment.frontend.metadata[0].name
+}
+
+output "backend_deployment_name" {
+  value = kubernetes_deployment.backend.metadata[0].name
 }
