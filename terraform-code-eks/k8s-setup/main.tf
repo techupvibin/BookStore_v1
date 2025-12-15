@@ -1,81 +1,113 @@
-provider "kubernetes" {
-  host                   = var.cluster_endpoint
-  cluster_ca_certificate = base64decode(var.cluster_ca)
-  token                  = var.token
+variable "cluster_endpoint" {}
+variable "cluster_ca" {}
+variable "token" {}
+variable "frontend_image" {}
+variable "backend_image" {}
+
+
+
+resource "kubernetes_namespace" "bookstore" {
+  metadata {
+    name = "bookstore"
+  }
 }
 
-# Backend Deployment
-resource "kubernetes_deployment_v1" "backend" {
-  metadata { name = "bookstore-backend" }
+resource "kubernetes_deployment" "frontend" {
+  metadata {
+    name      = "frontend"
+    namespace = kubernetes_namespace.bookstore.metadata[0].name
+  }
 
   spec {
     replicas = 2
-    selector { match_labels = { app = "bookstore-backend" } }
-
-    template {
-      metadata { labels = { app = "bookstore-backend" } }
-
-      spec {
-        container {
-          name  = "backend"
-          image = var.backend_image
-          port { container_port = 8080 }
-
-          env { name = "SPRING_DATASOURCE_URL" value = "jdbc:postgresql://postgres-db:5432/BookStore" }
-          env { name = "SPRING_DATASOURCE_USERNAME" value = "postgres" }
-          env { name = "SPRING_DATASOURCE_PASSWORD" value = "Wrong123" }
-          env { name = "SPRING_REDIS_HOST" value = "redis-cache" }
-          env { name = "SPRING_KAFKA_BOOTSTRAP_SERVERS" value = "kafka:29092" }
-        }
+    selector {
+      match_labels = {
+        app = "frontend"
       }
     }
-  }
-}
-
-resource "kubernetes_service_v1" "backend_service" {
-  metadata { name = "bookstore-backend" }
-
-  spec {
-    selector = { app = "bookstore-backend" }
-    port { port = 8080 target_port = 8080 }
-    type = "ClusterIP"
-  }
-}
-
-# Frontend Deployment
-resource "kubernetes_deployment_v1" "frontend" {
-  metadata { name = "bookstore-frontend" }
-
-  spec {
-    replicas = 2
-    selector { match_labels = { app = "bookstore-frontend" } }
-
     template {
-      metadata { labels = { app = "bookstore-frontend" } }
-
+      metadata {
+        labels = {
+          app = "frontend"
+        }
+      }
       spec {
         container {
           name  = "frontend"
           image = var.frontend_image
-          port { container_port = 80 }
-
-          env { name = "BACKEND_URL" value = "http://bookstore-backend.default.svc.cluster.local:8080" }
+          port {
+            container_port = 80
+          }
         }
       }
     }
   }
 }
 
-resource "kubernetes_service_v1" "frontend_service" {
-  metadata { name = "bookstore-frontend" }
+resource "kubernetes_service" "frontend_svc" {
+  metadata {
+    name      = "frontend"
+    namespace = kubernetes_namespace.bookstore.metadata[0].name
+  }
 
   spec {
-    selector = { app = "bookstore-frontend" }
-    port { port = 80 target_port = 80 }
+    selector = {
+      app = "frontend"
+    }
     type = "LoadBalancer"
+    port {
+      port        = 80
+      target_port = 80
+    }
   }
 }
 
-output "frontend_service_url" {
-  value = kubernetes_service_v1.frontend_service.status[0].load_balancer[0].ingress[0].hostname
+resource "kubernetes_deployment" "backend" {
+  metadata {
+    name      = "backend"
+    namespace = kubernetes_namespace.bookstore.metadata[0].name
+  }
+
+  spec {
+    replicas = 2
+    selector {
+      match_labels = {
+        app = "backend"
+      }
+    }
+    template {
+      metadata {
+        labels = {
+          app = "backend"
+        }
+      }
+      spec {
+        container {
+          name  = "backend"
+          image = var.backend_image
+          port {
+            container_port = 5000
+          }
+        }
+      }
+    }
+  }
+}
+
+resource "kubernetes_service" "backend_svc" {
+  metadata {
+    name      = "backend"
+    namespace = kubernetes_namespace.bookstore.metadata[0].name
+  }
+
+  spec {
+    selector = {
+      app = "backend"
+    }
+    type = "ClusterIP"
+    port {
+      port        = 5000
+      target_port = 5000
+    }
+  }
 }

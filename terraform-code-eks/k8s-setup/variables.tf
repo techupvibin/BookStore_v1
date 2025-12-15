@@ -1,19 +1,5 @@
-variable "cluster_endpoint" {
-  type = string
-}
-
-variable "cluster_ca" {
-  type = string
-}
-
-variable "token" {
-  type = string
-}
-
-variable "frontend_image" {
-  type = string
-}
-
-variable "backend_image" {
-  type = string
-}
+variable "cluster_endpoint" {}
+variable "cluster_ca" {}
+variable "token" {}
+variable "frontend_image" {}
+variable "backend_image" {}
