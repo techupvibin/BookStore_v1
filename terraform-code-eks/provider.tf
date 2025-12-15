@@ -1,6 +1,13 @@
 terraform {
   required_version = ">= 1.5.0"
 
+  backend "s3" {
+    bucket  = "bookstore-eks-terraform-state-vibin"
+    key     = "terraform.tfstate"
+    region  = "us-east-2"
+    encrypt = true
+  }
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -12,11 +19,11 @@ terraform {
     }
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 2.13"
+      version = "~> 2.8"
     }
   }
 }
 
 provider "aws" {
-  region = var.aws_region
+  region = "us-east-2"
 }
