@@ -37,6 +37,50 @@ resource "kubernetes_namespace" "monitoring" {
   depends_on = [var.cluster_ready]
 }
 
+
+
+resource "kubernetes_deployment" "frontend" {
+  metadata {
+    name      = "frontend"
+    namespace = "bookstore"
+  }
+
+  spec {
+    replicas = 2
+
+    template {
+      spec {
+        container {
+          name  = "frontend"
+          image = var.frontend_image_url
+        }
+      }
+    }
+  }
+}
+
+resource "kubernetes_deployment" "backend" {
+  metadata {
+    name      = "backend"
+    namespace = "bookstore"
+  }
+
+  spec {
+    replicas = 2
+
+    template {
+      spec {
+        container {
+          name  = "backend"
+          image = var.backend_image_url
+        }
+      }
+    }
+  }
+}
+
+
+
 ############################
 # Ingress NGINX Helm Release
 ############################

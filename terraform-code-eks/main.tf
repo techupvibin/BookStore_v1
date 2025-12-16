@@ -297,3 +297,7 @@ variable "db_security_groups" { type = list(string) }
 
 # MSK variables
 variable "msk_security_groups" { type = list(string) }
+
+variable "frontend_image" {}
+variable "backend_image" {}
+
