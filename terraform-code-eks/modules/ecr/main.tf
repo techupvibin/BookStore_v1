@@ -1,29 +1,19 @@
 ############################
-# ECR Repositories
+# ECR Repositories (Existing)
 ############################
-resource "aws_ecr_repository" "frontend" {
-  name                 = var.frontend_repo
-  image_tag_mutability = "MUTABLE"
-  tags = {
-    Name        = var.frontend_repo
-    Environment = var.environment
-  }
+data "aws_ecr_repository" "frontend" {
+  name = var.frontend_repo
 }
 
-resource "aws_ecr_repository" "backend" {
-  name                 = var.backend_repo
-  image_tag_mutability = "MUTABLE"
-  tags = {
-    Name        = var.backend_repo
-    Environment = var.environment
-  }
+data "aws_ecr_repository" "backend" {
+  name = var.backend_repo
 }
 
 ############################
-# Lifecycle Policies
+# Lifecycle Policies (optional, still managed by Terraform)
 ############################
 resource "aws_ecr_lifecycle_policy" "frontend" {
-  repository = aws_ecr_repository.frontend.name
+  repository = data.aws_ecr_repository.frontend.name
   policy     = jsonencode({
     rules = [
       {
@@ -44,7 +34,7 @@ resource "aws_ecr_lifecycle_policy" "frontend" {
 }
 
 resource "aws_ecr_lifecycle_policy" "backend" {
-  repository = aws_ecr_repository.backend.name
+  repository = data.aws_ecr_repository.backend.name
   policy     = jsonencode({
     rules = [
       {
@@ -69,12 +59,12 @@ resource "aws_ecr_lifecycle_policy" "backend" {
 ############################
 output "frontend_repo_url" {
   description = "URL of the frontend ECR repository"
-  value       = aws_ecr_repository.frontend.repository_url
+  value       = data.aws_ecr_repository.frontend.repository_url
 }
 
 output "backend_repo_url" {
   description = "URL of the backend ECR repository"
-  value       = aws_ecr_repository.backend.repository_url
+  value       = data.aws_ecr_repository.backend.repository_url
 }
 
 ############################
