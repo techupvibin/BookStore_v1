@@ -1,5 +1,5 @@
 ############################
-# Kubernetes Provider for Helm
+# Helm Provider for NGINX
 ############################
 provider "helm" {
   kubernetes {
@@ -10,13 +10,22 @@ provider "helm" {
 }
 
 ############################
-# Helm Release for Ingress NGINX
+# Kubernetes Namespace
+############################
+resource "kubernetes_namespace" "ingress" {
+  metadata {
+    name = "ingress-nginx"
+  }
+}
+
+############################
+# Ingress NGINX Helm Release
 ############################
 resource "helm_release" "nginx" {
-  name       = "ingress-nginx"
-  repository = "https://kubernetes.github.io/ingress-nginx"
-  chart      = "ingress-nginx"
-  namespace  = "ingress-nginx"
+  name             = "ingress-nginx"
+  repository       = "https://kubernetes.github.io/ingress-nginx"
+  chart            = "ingress-nginx"
+  namespace        = kubernetes_namespace.ingress.metadata[0].name
   create_namespace = true
 
   values = [
@@ -26,20 +35,24 @@ controller:
     type: LoadBalancer
 EOF
   ]
+
+  depends_on = [kubernetes_namespace.ingress]
 }
 
 ############################
 # Outputs
 ############################
 output "nginx_release_name" {
-  value = helm_release.nginx.name
+  description = "Helm release name of Ingress NGINX"
+  value       = helm_release.nginx.name
 }
 
-############################
-# Variables
-############################
+output "nginx_namespace" {
+  description = "Namespace where NGINX is deployed"
+  value       = kubernetes_namespace.ingress.metadata[0].name
+}
 variable "cluster_endpoint" {
-  description = "EKS cluster endpoint"
+  description = "EKS cluster endpoint for Kubernetes provider"
   type        = string
 }
 

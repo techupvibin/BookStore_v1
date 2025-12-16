@@ -23,6 +23,9 @@ resource "kubernetes_deployment" "frontend" {
   metadata {
     name      = "frontend"
     namespace = kubernetes_namespace.bookstore.metadata[0].name
+    labels = {
+      app = "frontend"
+    }
   }
 
   spec {
@@ -45,7 +48,6 @@ resource "kubernetes_deployment" "frontend" {
         container {
           name  = "frontend"
           image = var.frontend_image_url
-
           port {
             container_port = 80
           }
@@ -56,12 +58,38 @@ resource "kubernetes_deployment" "frontend" {
 }
 
 ############################
+# Frontend Service
+############################
+resource "kubernetes_service" "frontend" {
+  metadata {
+    name      = "frontend-svc"
+    namespace = kubernetes_namespace.bookstore.metadata[0].name
+  }
+
+  spec {
+    selector = {
+      app = "frontend"
+    }
+
+    port {
+      port        = 80
+      target_port = 80
+    }
+
+    type = "ClusterIP"
+  }
+}
+
+############################
 # Backend Deployment
 ############################
 resource "kubernetes_deployment" "backend" {
   metadata {
     name      = "backend"
     namespace = kubernetes_namespace.bookstore.metadata[0].name
+    labels = {
+      app = "backend"
+    }
   }
 
   spec {
@@ -84,13 +112,35 @@ resource "kubernetes_deployment" "backend" {
         container {
           name  = "backend"
           image = var.backend_image_url
-
           port {
             container_port = 8080
           }
         }
       }
     }
+  }
+}
+
+############################
+# Backend Service
+############################
+resource "kubernetes_service" "backend" {
+  metadata {
+    name      = "backend-svc"
+    namespace = kubernetes_namespace.bookstore.metadata[0].name
+  }
+
+  spec {
+    selector = {
+      app = "backend"
+    }
+
+    port {
+      port        = 8080
+      target_port = 8080
+    }
+
+    type = "ClusterIP"
   }
 }
 
@@ -105,9 +155,13 @@ output "backend_deployment_name" {
   value = kubernetes_deployment.backend.metadata[0].name
 }
 
-############################
-# Variables
-############################
+output "frontend_service_name" {
+  value = kubernetes_service.frontend.metadata[0].name
+}
+
+output "backend_service_name" {
+  value = kubernetes_service.backend.metadata[0].name
+}
 variable "k8s_cluster_endpoint" {
   description = "EKS cluster endpoint"
   type        = string
@@ -124,11 +178,11 @@ variable "k8s_auth_token" {
 }
 
 variable "frontend_image_url" {
-  description = "Docker image URL for frontend"
+  description = "ECR image URL for frontend"
   type        = string
 }
 
 variable "backend_image_url" {
-  description = "Docker image URL for backend"
+  description = "ECR image URL for backend"
   type        = string
 }
