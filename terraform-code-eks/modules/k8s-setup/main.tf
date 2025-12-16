@@ -145,3 +145,14 @@ variable "cluster_ready" {
   type        = bool
   default     = true
 }
+
+variable "frontend_image_url" {
+  description = "430006376054.dkr.ecr.us-east-2.amazonaws.com/bookstore-frontend:latest"
+  type        = string
+}
+
+variable "backend_image_url" {
+  description = "430006376054.dkr.ecr.us-east-2.amazonaws.com/bookstore-backend:latest"
+  type        = string
+}
+
