@@ -98,6 +98,19 @@ resource "aws_iam_role_policy_attachment" "node_policies" {
   policy_arn = each.value
 }
 
+
+# ecr.tf in root module
+resource "aws_ecr_repository" "frontend" {
+  name                 = "bookstore-frontend"
+  image_tag_mutability = "MUTABLE"
+}
+
+resource "aws_ecr_repository" "backend" {
+  name                 = "bookstore-backend"
+  image_tag_mutability = "MUTABLE"
+}
+
+
 ############################
 # EKS Module
 ############################
