@@ -1,4 +1,17 @@
 ############################
+# Providers
+############################
+provider "aws" {
+  region = var.aws_region
+}
+
+provider "kubernetes" {
+  host                   = aws_eks_cluster.this.endpoint
+  cluster_ca_certificate = base64decode(aws_eks_cluster.this.certificate_authority[0].data)
+  token                  = data.aws_eks_cluster_auth.this.token
+}
+
+############################
 # EKS Cluster
 ############################
 resource "aws_eks_cluster" "this" {
@@ -16,7 +29,7 @@ resource "aws_eks_cluster" "this" {
 }
 
 ############################
-# EKS Node Group
+# Node Group
 ############################
 resource "aws_eks_node_group" "this" {
   cluster_name    = aws_eks_cluster.this.name
@@ -39,6 +52,32 @@ resource "aws_eks_node_group" "this" {
 }
 
 ############################
+# Data for EKS Auth
+############################
+data "aws_eks_cluster_auth" "this" {
+  name = aws_eks_cluster.this.name
+}
+
+############################
+# Kubernetes Namespaces
+############################
+resource "kubernetes_namespace" "ingress" {
+  metadata {
+    name = "ingress-nginx"
+  }
+
+  depends_on = [aws_eks_cluster.this]
+}
+
+resource "kubernetes_namespace" "monitoring" {
+  metadata {
+    name = "monitoring"
+  }
+
+  depends_on = [aws_eks_cluster.this]
+}
+
+############################
 # Outputs
 ############################
 output "cluster_name" {
@@ -56,6 +95,38 @@ output "cluster_ca" {
 output "node_group_name" {
   value = aws_eks_node_group.this.node_group_name
 }
+
+output "kubeconfig" {
+  value = <<EOT
+apiVersion: v1
+clusters:
+- cluster:
+    server: ${aws_eks_cluster.this.endpoint}
+    certificate-authority-data: ${aws_eks_cluster.this.certificate_authority[0].data}
+  name: ${aws_eks_cluster.this.name}
+contexts:
+- context:
+    cluster: ${aws_eks_cluster.this.name}
+    user: ${aws_eks_cluster.this.name}
+  name: ${aws_eks_cluster.this.name}
+current-context: ${aws_eks_cluster.this.name}
+kind: Config
+preferences: {}
+users:
+- name: ${aws_eks_cluster.this.name}
+  user:
+    token: ${data.aws_eks_cluster_auth.this.token}
+EOT
+}
+
+############################
+# Variables
+############################
+variable "aws_region" {
+  type    = string
+  default = "us-east-2"
+}
+
 variable "cluster_name" {
   description = "Name of the EKS cluster"
   type        = string

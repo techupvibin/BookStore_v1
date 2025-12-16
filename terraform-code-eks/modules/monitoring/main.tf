@@ -10,45 +10,42 @@ provider "helm" {
 }
 
 ############################
-# Kubernetes Namespace
-############################
-resource "kubernetes_namespace" "monitoring" {
-  metadata {
-    name = "monitoring"
-  }
-}
-
-############################
 # Prometheus Helm Release
 ############################
 resource "helm_release" "prometheus" {
-  name             = "prometheus"
-  repository       = "https://prometheus-community.github.io/helm-charts"
-  chart            = "prometheus"
-  namespace        = kubernetes_namespace.monitoring.metadata[0].name
+  name       = "prometheus"
+  repository = "https://prometheus-community.github.io/helm-charts"
+  chart      = "prometheus"
+  version    = "27.50.1"
+
+  namespace        = "monitoring"
   create_namespace = true
+
+  wait = true
 }
 
 ############################
 # Grafana Helm Release
 ############################
 resource "helm_release" "grafana" {
-  name             = "grafana"
-  repository       = "https://grafana.github.io/helm-charts"
-  chart            = "grafana"
-  namespace        = kubernetes_namespace.monitoring.metadata[0].name
+  name       = "grafana"
+  repository = "https://grafana.github.io/helm-charts"
+  chart      = "grafana"
+  version    = "10.3.1"
+
+  namespace        = "monitoring"
   create_namespace = true
 
   values = [
-    <<EOF
+    <<-EOT
 adminUser: admin
 adminPassword: admin123
 service:
   type: LoadBalancer
-EOF
+EOT
   ]
 
-  depends_on = [kubernetes_namespace.monitoring]
+  wait = true
 }
 
 ############################
@@ -63,10 +60,12 @@ output "grafana_release_name" {
 }
 
 output "monitoring_namespace" {
-  value = kubernetes_namespace.monitoring.metadata[0].name
+  value = "monitoring"
 }
 
-
+############################
+# Variables
+############################
 variable "k8s_cluster_endpoint" {
   description = "EKS cluster endpoint"
   type        = string

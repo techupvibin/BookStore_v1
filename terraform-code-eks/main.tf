@@ -60,7 +60,7 @@ resource "aws_iam_role" "eks_cluster_role" {
   name = "${var.cluster_name}-cluster-role"
 
   assume_role_policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [{
       Effect    = "Allow"
       Principal = { Service = "eks.amazonaws.com" }
@@ -78,7 +78,7 @@ resource "aws_iam_role" "node_role" {
   name = "${var.cluster_name}-node-role"
 
   assume_role_policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [{
       Effect    = "Allow"
       Principal = { Service = "ec2.amazonaws.com" }
@@ -167,32 +167,32 @@ module "monitoring" {
 # RDS Module
 ############################
 module "rds" {
-  source           = "./modules/rds"
-  db_name          = var.db_name
-  username         = var.db_username
-  password         = var.db_password
-  instance_class   = var.db_instance_class
-  storage          = var.db_storage
-  subnet_group     = var.db_subnet_group
-  security_groups  = var.db_security_groups
-  multi_az         = false
+  source              = "./modules/rds"
+  db_name             = var.db_name
+  username            = var.db_username
+  password            = var.db_password
+  instance_class      = var.db_instance_class
+  storage             = var.db_storage
+  subnet_group        = var.db_subnet_group
+  security_groups     = var.db_security_groups
+  multi_az            = false
   skip_final_snapshot = true
-  deletion_protection  = false
+  deletion_protection = false
 }
 
 ############################
 # MSK Module
 ############################
 module "msk" {
-  source              = "./modules/msk"
-  cluster_name        = "${var.cluster_name}-msk"
-  subnet_ids          = module.vpc.private_subnet_ids
-  security_groups     = var.msk_security_groups
-  broker_count        = 3
-  instance_type       = "kafka.m5.large"
-  kafka_version       = "3.5.1"
+  source               = "./modules/msk"
+  cluster_name         = "${var.cluster_name}-msk"
+  subnet_ids           = module.vpc.private_subnet_ids
+  security_groups      = var.msk_security_groups
+  broker_count         = 3
+  instance_type        = "kafka.m5.large"
+  kafka_version        = "3.5.1"
   cloudwatch_log_group = "/msk/${var.cluster_name}"
-  environment         = var.environment
+  environment          = var.environment
 }
 
 ############################
