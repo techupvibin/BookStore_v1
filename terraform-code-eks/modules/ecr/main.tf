@@ -1,7 +1,43 @@
 ############################
+# Variables
+############################
+variable "frontend_repo" {
+  description = "430006376054.dkr.ecr.us-east-2.amazonaws.com/bookstore-frontend:latest"
+  type        = string
+}
+
+variable "backend_repo" {
+  description = "430006376054.dkr.ecr.us-east-2.amazonaws.com/bookstore-backend:latest"
+  type        = string
+}
+
+variable "environment" {
+  description = "Environment tag (dev/staging/prod)"
+  type        = string
+  default     = "prod"
+}
+
+############################
+# Check if frontend repo exists
+############################
+data "aws_ecr_repository" "frontend" {
+  count = length([for r in aws_ecr_repository.frontend.*.name : r if r == var.frontend_repo]) > 0 ? 0 : 1
+  name  = var.frontend_repo
+}
+
+############################
+# Check if backend repo exists
+############################
+data "aws_ecr_repository" "backend" {
+  count = length([for r in aws_ecr_repository.backend.*.name : r if r == var.backend_repo]) > 0 ? 0 : 1
+  name  = var.backend_repo
+}
+
+############################
 # Frontend ECR Repository
 ############################
 resource "aws_ecr_repository" "frontend" {
+  count                = length(data.aws_ecr_repository.frontend) > 0 ? 0 : 1
   name                 = var.frontend_repo
   image_tag_mutability = "MUTABLE"
   tags = {
@@ -14,6 +50,7 @@ resource "aws_ecr_repository" "frontend" {
 # Backend ECR Repository
 ############################
 resource "aws_ecr_repository" "backend" {
+  count                = length(data.aws_ecr_repository.backend) > 0 ? 0 : 1
   name                 = var.backend_repo
   image_tag_mutability = "MUTABLE"
   tags = {
@@ -23,10 +60,10 @@ resource "aws_ecr_repository" "backend" {
 }
 
 ############################
-# Optional: Lifecycle policy to remove old images
+# Lifecycle Policies
 ############################
 resource "aws_ecr_lifecycle_policy" "frontend" {
-  repository = aws_ecr_repository.frontend.name
+  repository = coalesce(aws_ecr_repository.frontend[0].name, data.aws_ecr_repository.frontend[0].name)
   policy     = jsonencode({
     rules = [
       {
@@ -47,7 +84,7 @@ resource "aws_ecr_lifecycle_policy" "frontend" {
 }
 
 resource "aws_ecr_lifecycle_policy" "backend" {
-  repository = aws_ecr_repository.backend.name
+  repository = coalesce(aws_ecr_repository.backend[0].name, data.aws_ecr_repository.backend[0].name)
   policy     = jsonencode({
     rules = [
       {
@@ -72,26 +109,10 @@ resource "aws_ecr_lifecycle_policy" "backend" {
 ############################
 output "frontend_repo_url" {
   description = "URL of the frontend ECR repository"
-  value       = aws_ecr_repository.frontend.repository_url
+  value       = coalesce(aws_ecr_repository.frontend[0].repository_url, data.aws_ecr_repository.frontend[0].repository_url)
 }
 
 output "backend_repo_url" {
   description = "URL of the backend ECR repository"
-  value       = aws_ecr_repository.backend.repository_url
-}
-
-variable "frontend_repo" {
-  description = "Name of the frontend ECR repository"
-  type        = string
-}
-
-variable "backend_repo" {
-  description = "Name of the backend ECR repository"
-  type        = string
-}
-
-variable "environment" {
-  description = "Environment tag (dev/staging/prod)"
-  type        = string
-  default     = "prod"
+  value       = coalesce(aws_ecr_repository.backend[0].repository_url, data.aws_ecr_repository.backend[0].repository_url)
 }
